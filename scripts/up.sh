@@ -50,6 +50,17 @@ if ! curl -fsS -o /dev/null "$WEB/healthz"; then
     "Confira APP_PORT e firewall; logs: make logs SERVICE=app"
 fi
 
+if [ "$OBSERVABILITY" = "1" ]; then
+  # Loki and the Collector images have no shell for a compose healthcheck: wait for Loki here.
+  for _ in $(seq 1 30); do
+    if curl -fsS -o /dev/null "http://localhost:$LOKI_PORT/ready" 2>/dev/null; then break; fi
+    sleep 1
+  done
+  if ! curl -fsS -o /dev/null "http://localhost:$LOKI_PORT/ready" 2>/dev/null; then
+    warn "Loki ainda não respondeu em http://localhost:$LOKI_PORT/ready (logs podem demorar a aparecer). Veja: make logs SERVICE=loki"
+  fi
+fi
+
 ok "Catraca no ar"
 cat <<EOF
 

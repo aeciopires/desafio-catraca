@@ -1,10 +1,15 @@
-// Worker entrypoint (service "worker"): polls due payment jobs and exposes /healthz (+ /metrics in F09).
+// Worker entrypoint (service "worker"): polls due payment jobs and exposes /healthz and /metrics.
 import { createServer } from 'node:http';
 import { config } from '../config.ts';
 import { pool, waitForDatabase } from '../db/pool.ts';
 import { logger } from '../observability/logger.ts';
 import { processDuePayments } from './payment-worker.ts';
-import { extraHandlers } from './http.ts';
+import { addWorkerHttpHandler, extraHandlers } from './http.ts';
+import { renderMetrics } from '../observability/metrics.ts';
+
+addWorkerHttpHandler(async (path) =>
+  path === '/metrics' ? { status: 200, ...(await renderMetrics()) } : null,
+);
 
 let running = true;
 let lastTickOk = Date.now();
