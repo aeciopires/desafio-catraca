@@ -36,8 +36,8 @@
     "F04": {
       "name": "Vitrine e área do participante",
       "wave": 3,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F04-vitrine",
       "pr": "",
       "latestReport": ""
     },
