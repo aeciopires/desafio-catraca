@@ -111,6 +111,8 @@ function walk(dir, acc = []) {
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const full = join(dir, name);
+    // Agent worktrees (.claude/worktrees/*) are other checkouts of the repo: never touch them.
+    if (relative(ROOT, full) === join('.claude', 'worktrees')) continue;
     const st = statSync(full);
     if (st.isDirectory()) walk(full, acc);
     else if (name.endsWith('.md')) acc.push(full);
