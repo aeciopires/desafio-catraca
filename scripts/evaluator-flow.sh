@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Evaluator flow (TASK.md, "Fluxo do avaliador") driven by curl against the RUNNING stack.
 # Reproduces the steps observable through HTTP; steps that depend on features of later waves
-# (check-in, cancellation, dashboard) print SKIP until those features land.
+# (cancellation, dashboard) print SKIP until those features land.
 #   usage: [APP_PORT=8080] [PARTNER_API_KEY=...] [FAST=1] scripts/evaluator-flow.sh
 #   FAST=1: in step 8, poll until T2 is declined instead of waiting the full 45 s.
 # Bash 3.2 compatible (macOS): no associative arrays, no mapfile, no ${var,,}.
@@ -15,6 +15,7 @@ KEY="${PARTNER_API_KEY:-catraca-partner-key-dev}"
 FAST="${FAST:-0}"
 ORG_A_EMAIL="organizador.a@catraca.local"
 ORG_B_EMAIL="organizador.b@catraca.local"
+SEED_P_EMAIL="participante@catraca.local"
 SEED_PASSWORD="catraca123"
 
 WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/catraca-flow.XXXXXX")"
@@ -125,6 +126,21 @@ testid() {
     sed 's/^ *//; s/ *$//'
 }
 
+# checkin JAR EVENT_ID CODE: check-in POST on the management page → STATUS/BODY, and the
+# message (text of data-testid="checkin-result") in CHECKIN.
+CHECKIN=""
+checkin() {
+  STATUS="$(curl -s -o "$WORK_DIR/page" -w '%{http_code}' -c "$1" -b "$1" -X POST \
+    "$WEB/organizer/events/$2/checkin" --data-urlencode "code=$3" || true)"
+  BODY="$(cat "$WORK_DIR/page" 2>/dev/null || true)"
+  CHECKIN="$(testid "$BODY" checkin-result)"
+}
+
+# shows_event_data HTML: true when the page exposes E1 data (its name or the code C1).
+shows_event_data() {
+  printf '%s' "$1" | grep -Fq -e "$E1_NAME" -e "$C1"
+}
+
 purchase_json() {
   printf '{"buyerEmail":"%s","cardNumber":"%s"}' "$1" "$2"
 }
@@ -147,7 +163,8 @@ web_login "$JAR_A" "$ORG_A_EMAIL" ||
 pass "01" "produto no ar com a seed (login do organizador A)"
 
 # --- Step 2: draft E1 is not listed ------------------------------------------------------------
-E1="$(create_event "$JAR_A" "E1 Fluxo $RUN_ID" 2 "100,00")"
+E1_NAME="E1 Fluxo $RUN_ID"
+E1="$(create_event "$JAR_A" "$E1_NAME" 2 "100,00")"
 if [ -z "$E1" ]; then
   die "FLOW-02" "Não foi possível criar o evento E1 pela área do organizador" \
     "Formulário de criação rejeitou os dados ou a sessão expirou." \
@@ -206,10 +223,11 @@ check "05" "ingresso C1 confirmado em $((SECONDS - p5_at))s (recarregando a pág
 STEP6_AT=$SECONDS
 api POST "/api/partner/events/$E1/purchases" "$(purchase_json t2@example.com 4000000000000004)"
 T2="$(jget "$BODY" "d.ticketId")"
+C2="$(jget "$BODY" "d.code")"
 st="$(jget "$BODY" "d.status")"
 keys="$(jget "$BODY" "Object.keys(d).sort().join(',')")"
 rc=0; [ "$STATUS" = "202" ] && [ "$st" = "pending" ] && [ "$keys" = "code,status,ticketId" ] || rc=1
-check "06" "compra pela API (…0004) → 202 pending ($T2)" "$rc" "HTTP $STATUS $BODY"
+check "06" "compra pela API (…0004) → 202 pending ($T2, código C2=$C2)" "$rc" "HTTP $STATUS $BODY"
 seats="$(event_field "$E1" availableSeats)"
 rc=0; [ "$seats" = "0" ] || rc=1
 check "06" "listagem mostra E1 com availableSeats 0" "$rc" "availableSeats=$seats"
@@ -255,18 +273,42 @@ fi
 rc=0; [ "$st" = "confirmed" ] || rc=1
 check "08" "T3 ($T3, …0001) confirmado em $((SECONDS - t3_at))s" "$rc" "status=$st"
 
-# --- Steps 9-10 ---------------------------------------------------------------------------------
+# --- Step 9 -------------------------------------------------------------------------------------
 skip "09" "edição de lotação/preço e painel de E1 (TODO: F08 — painel)"
-skip "10" "check-in de C1/C2/ZZZZZZZZ (TODO: F06 — check-in)"
 
-# --- Step 11 (API part): organizer B's E2 bought through the API -------------------------------
+# --- Step 10: check-in on E1 as organizer A ----------------------------------------------------
+E1_URL="/organizer/events/$E1"
+for pair in "$C1|Entrada liberada|C1" "$C1|Ingresso já utilizado|C1 de novo" \
+  "$C2|Ingresso não confirmado|C2" "ZZZZZZZZ|Ingresso inválido para este evento|ZZZZZZZZ"; do
+  code_in="${pair%%|*}"
+  rest="${pair#*|}"
+  expected="${rest%%|*}"
+  label="${rest#*|}"
+  checkin "$JAR_A" "$E1" "$code_in"
+  rc=0; [ "$STATUS" = "200" ] && [ "$CHECKIN" = "$expected" ] || rc=1
+  check "10" "check-in de $label ($code_in) em E1 → '$expected'" "$rc" "HTTP $STATUS; checkin-result='$CHECKIN'"
+done
+skip "10" "painel de E1 mostra Check-ins 1 (TODO: F08 — painel)"
+web_get "$JAR_A" "$E1_URL"
+rc=0; [ "$STATUS" = "200" ] && printf '%s' "$BODY" | grep -Fq "$E1_NAME" || rc=1
+check "10" "endereço da página de gestão de E1 copiado: $E1_URL" "$rc" "GET $E1_URL → HTTP $STATUS"
+
+# --- Step 11: isolation between organizers; C3 (E2) is invalid on E1 --------------------------
+C3=""
 if web_login "$JAR_B" "$ORG_B_EMAIL"; then
+  web_get "$JAR_B" /organizer/events
+  rc=0; [ "$STATUS" = "200" ] && ! printf '%s' "$BODY" | grep -Fq "$E1_NAME" || rc=1
+  check "11" "organizador B: lista de eventos não mostra E1" "$rc" "GET /organizer/events → HTTP $STATUS"
+  web_get "$JAR_B" "$E1_URL"
+  rc=0; ! shows_event_data "$BODY" || rc=1
+  check "11" "organizador B: endereço de E1 não exibe dados de E1 (HTTP $STATUS)" "$rc" "GET $E1_URL"
   E2="$(create_event "$JAR_B" "E2 Fluxo $RUN_ID" 1 "20,00")"
   if [ -n "$E2" ] && publish_event "$JAR_B" "$E2"; then
     price="$(event_field "$E2" priceCents)"
     api POST "/api/partner/events/$E2/purchases" "$(purchase_json "c3-$RUN_ID@example.com" 4000000000000001)"
-    rc=0; [ "$price" = "2000" ] && [ "$STATUS" = "202" ] || rc=1
-    check "11" "E2 do organizador B listado (priceCents 2000) e comprado pela API" "$rc" \
+    C3="$(jget "$BODY" "d.code")"
+    rc=0; [ "$price" = "2000" ] && [ "$STATUS" = "202" ] && [ -n "$C3" ] || rc=1
+    check "11" "E2 do organizador B listado (priceCents 2000) e comprado pela API (C3=$C3)" "$rc" \
       "priceCents=$price; compra HTTP $STATUS $BODY"
   else
     fail "11" "Não foi possível criar/publicar E2 como organizador B" "E2='$E2'"
@@ -274,7 +316,25 @@ if web_login "$JAR_B" "$ORG_B_EMAIL"; then
 else
   fail "11" "Login do organizador B falhou" "curl -i -X POST $WEB/login"
 fi
-skip "11" "isolamento entre organizadores e check-in de C3 em E1 (TODO: F06)"
+JAR_SEED_P="$WORK_DIR/seed-participant.jar"
+if web_login "$JAR_SEED_P" "$SEED_P_EMAIL"; then
+  web_get "$JAR_SEED_P" "$E1_URL"
+  rc=0; ! shows_event_data "$BODY" || rc=1
+  check "11" "participante da seed: endereço de E1 não exibe dados de E1 (HTTP $STATUS)" "$rc" "GET $E1_URL"
+else
+  fail "11" "Login do participante da seed falhou" "curl -i -X POST $WEB/login"
+fi
+web_get "$WORK_DIR/visitor-11.jar" "$E1_URL"
+rc=0; ! shows_event_data "$BODY" || rc=1
+check "11" "deslogado: endereço de E1 não exibe dados de E1 (HTTP $STATUS)" "$rc" "GET $E1_URL"
+if [ -n "$C3" ]; then
+  checkin "$JAR_A" "$E1" "$C3"
+  rc=0; [ "$STATUS" = "200" ] && [ "$CHECKIN" = "Ingresso inválido para este evento" ] || rc=1
+  check "11" "organizador A: C3 ($C3, de E2) no check-in de E1 → 'Ingresso inválido para este evento'" \
+    "$rc" "HTTP $STATUS; checkin-result='$CHECKIN'"
+else
+  fail "11" "Sem o código C3 não há como fazer o check-in de C3 em E1" "C3 vazio"
+fi
 
 # --- Steps 12-14 --------------------------------------------------------------------------------
 skip "12" "cancelamento de E3 (TODO: F07 — cancelamento)"
