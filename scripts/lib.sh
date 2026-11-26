@@ -57,3 +57,14 @@ compose_profiles() {
     echo "--profile observability"
   fi
 }
+
+# node_run ARGS...: runs Node.js from the host when it works; otherwise (missing Node, or a mise
+# shim refusing an untrusted .mise.toml in a fresh clone) falls back to the project's Node image.
+NODE_IMAGE="${NODE_IMAGE:-node:26.13.1-trixie-slim}"
+node_run() {
+  if node -e '' >/dev/null 2>&1; then
+    node "$@"
+  else
+    docker run --rm -u "$(id -u):$(id -g)" -v "$ROOT_DIR":/w -w /w "$NODE_IMAGE" node "$@"
+  fi
+}
