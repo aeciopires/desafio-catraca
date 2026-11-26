@@ -1,6 +1,6 @@
 {
   "project": "catraca",
-  "updatedAt": "2026-11-25T23:40:00-03:00",
+  "updatedAt": "2026-11-25T23:55:00-03:00",
   "statusValues": [
     "todo",
     "in_progress",
@@ -12,10 +12,10 @@
     "F01": {
       "name": "Fundação",
       "wave": 1,
-      "status": "in_review",
+      "status": "done",
       "branch": "feat/F01-fundacao",
-      "pr": "",
-      "latestReport": ""
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/1",
+      "latestReport": "docs/features/F01-fundacao/reports/2026-11-25T232112-7808dd6.md"
     },
     "F02": {
       "name": "Gestão de eventos",
