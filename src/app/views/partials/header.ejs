@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · Catraca</title>
+  <style>
+    :root { --fg:#1d1d1f; --muted:#666; --accent:#0b5fff; --bg:#fafafa; --card:#fff; --err:#b00020; --ok:#0a7d32; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; color: var(--fg); background: var(--bg); }
+    header.top { display:flex; gap:1rem; align-items:center; padding:.75rem 1rem; background:#111; color:#fff; flex-wrap: wrap; }
+    header.top a, header.top button { color:#fff; text-decoration:none; background:none; border:0; cursor:pointer; font:inherit; }
+    header.top .brand { font-weight:700; margin-right:auto; }
+    main { max-width: 960px; margin: 0 auto; padding: 1rem; }
+    .card { background: var(--card); border:1px solid #ddd; border-radius:8px; padding:1rem; margin-bottom:1rem; }
+    .error { color: var(--err); font-weight: 600; }
+    .flash { color: var(--ok); font-weight: 600; }
+    label { display:block; margin:.5rem 0 .25rem; }
+    input, button.btn { font: inherit; padding:.4rem .6rem; }
+    button.btn { background: var(--accent); color:#fff; border:0; border-radius:4px; cursor:pointer; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align:left; padding:.4rem; border-bottom:1px solid #eee; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">Catraca</a>
+  <a href="/">Vitrine</a>
+  <% if (locals.user && user.role === 'participant') { %><a href="/me/tickets">Meus ingressos</a><% } %>
+  <% if (locals.user && user.role === 'organizer') { %><a href="/organizer/events">Meus eventos</a><% } %>
+  <% if (locals.user) { %>
+    <span data-testid="current-user"><%= user.name %></span>
+    <form method="post" action="/logout" style="display:inline"><button type="submit" data-testid="logout">Sair</button></form>
+  <% } else { %>
+    <a href="/login">Entrar</a>
+    <a href="/signup">Criar conta</a>
+  <% } %>
+</header>
+<main>

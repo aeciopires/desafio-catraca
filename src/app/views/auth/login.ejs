@@ -1,0 +1,13 @@
+<%- include('../partials/header', { title: 'Entrar' }) %>
+<h1>Entrar</h1>
+<% if (error) { %><p class="error" data-testid="form-error"><%= error %></p><% } %>
+<form method="post" action="/login" class="card" data-testid="login-form">
+  <input type="hidden" name="next" value="<%= next %>">
+  <label for="email">E-mail</label>
+  <input id="email" name="email" type="email" required value="<%= email %>">
+  <label for="password">Senha</label>
+  <input id="password" name="password" type="password" required>
+  <p><button class="btn" type="submit">Entrar</button></p>
+</form>
+<p>Não tem conta? <a href="/signup<%= next ? '?next=' + encodeURIComponent(next) : '' %>">Crie a sua</a>.</p>
+<%- include('../partials/footer') %>
