@@ -28,8 +28,8 @@
     "F03": {
       "name": "Núcleo de compra e pagamento",
       "wave": 2,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F03-compra-pagamento",
       "pr": "",
       "latestReport": ""
     },
