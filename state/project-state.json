@@ -76,8 +76,8 @@
     "F09": {
       "name": "Observabilidade",
       "wave": 5,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F09-observabilidade",
       "pr": "",
       "latestReport": ""
     }
