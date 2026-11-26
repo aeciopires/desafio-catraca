@@ -1,0 +1,9 @@
+node_modules
+coverage
+reports
+*.md
+*.ejs
+*.yml
+*.yaml
+docker/grafana/dashboards
+package-lock.json

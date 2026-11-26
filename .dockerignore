@@ -1,0 +1,9 @@
+.git
+node_modules
+coverage
+reports
+test-results
+.env
+.claude
+*.md
+!docs

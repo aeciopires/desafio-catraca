@@ -1,0 +1,16 @@
+{
+  "project": "catraca",
+  "updatedAt": "2026-11-25T21:00:00-03:00",
+  "statusValues": ["todo", "in_progress", "in_review", "changes_requested", "done"],
+  "features": {
+    "F01": { "name": "Fundação", "wave": 1, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F02": { "name": "Gestão de eventos", "wave": 2, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F03": { "name": "Núcleo de compra e pagamento", "wave": 2, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F04": { "name": "Vitrine e área do participante", "wave": 3, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F05": { "name": "API de parceiros + OpenAPI", "wave": 3, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F06": { "name": "Check-in", "wave": 4, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F07": { "name": "Cancelamento de evento", "wave": 4, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F08": { "name": "Painel do evento", "wave": 5, "status": "todo", "branch": "", "pr": "", "latestReport": "" },
+    "F09": { "name": "Observabilidade", "wave": 5, "status": "todo", "branch": "", "pr": "", "latestReport": "" }
+  }
+}

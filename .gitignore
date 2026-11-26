@@ -424,3 +424,13 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# --- Catraca (Node.js / project) ---
+node_modules/
+coverage/
+.env
+.env.local
+test-results/
+reports/tests/
+.vitest/
+*.tsbuildinfo

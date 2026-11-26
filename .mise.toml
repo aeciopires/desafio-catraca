@@ -1,0 +1,12 @@
+# Local developer tools managed by mise (https://mise.jdx.dev).
+# Docker / Docker Compose / Colima are NOT managed here: they come from the OS.
+# Versions are pinned on purpose; update only when explicitly requested (see CLAUDE.md).
+[tools]
+node = "26.13.1"
+jq = "1.8.2"
+shellcheck = "0.11.0"
+hadolint = "2.15.1"
+
+[env]
+# Keep npm cache inside the project user space, never global.
+NPM_CONFIG_UPDATE_NOTIFIER = "false"
