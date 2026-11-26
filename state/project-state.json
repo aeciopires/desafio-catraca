@@ -20,10 +20,10 @@
     "F02": {
       "name": "Gestão de eventos",
       "wave": 2,
-      "status": "todo",
-      "branch": "",
-      "pr": "",
-      "latestReport": ""
+      "status": "done",
+      "branch": "feat/F02-eventos",
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/3",
+      "latestReport": "docs/features/F02-eventos/reports/2026-11-25T233154-bd14c51.md"
     },
     "F03": {
       "name": "Núcleo de compra e pagamento",
