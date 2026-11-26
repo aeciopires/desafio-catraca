@@ -1,0 +1,10 @@
+<%# Check-in section (F06, R10). Expects: event; optional checkinResult { result, message }. %>
+<h2>Check-in</h2>
+<form method="post" action="/organizer/events/<%= encodeURIComponent(event.id) %>/checkin" class="card" data-testid="checkin-form">
+  <label for="checkin-code">Código do ingresso</label>
+  <input id="checkin-code" name="code" required autocomplete="off" maxlength="64" data-testid="checkin-code">
+  <p><button class="btn" type="submit" data-testid="checkin-button">Validar entrada</button></p>
+</form>
+<% if (typeof checkinResult !== 'undefined' && checkinResult) { %>
+<p class="flash" data-testid="checkin-result" data-result="<%= checkinResult.result %>"><%= checkinResult.message %></p>
+<% } %>

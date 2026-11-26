@@ -52,10 +52,10 @@
     "F06": {
       "name": "Check-in",
       "wave": 4,
-      "status": "todo",
-      "branch": "",
-      "pr": "",
-      "latestReport": ""
+      "status": "done",
+      "branch": "feat/F06-checkin",
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/8",
+      "latestReport": "docs/features/F06-checkin/reports/2026-11-26T001042-308fab7.md"
     },
     "F07": {
       "name": "Cancelamento de evento",
