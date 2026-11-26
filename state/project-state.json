@@ -20,8 +20,8 @@
     "F02": {
       "name": "Gestão de eventos",
       "wave": 2,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F02-eventos",
       "pr": "",
       "latestReport": ""
     },
