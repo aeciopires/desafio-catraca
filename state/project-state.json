@@ -1,6 +1,6 @@
 {
   "project": "catraca",
-  "updatedAt": "2026-11-26T00:35:00-03:00",
+  "updatedAt": "2026-11-26T01:00:00-03:00",
   "statusValues": [
     "todo",
     "in_progress",
@@ -76,10 +76,10 @@
     "F09": {
       "name": "Observabilidade",
       "wave": 5,
-      "status": "in_review",
+      "status": "done",
       "branch": "feat/F09-observabilidade",
-      "pr": "",
-      "latestReport": ""
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/11",
+      "latestReport": "docs/features/F09-observabilidade/reports/2026-11-26T004615-2ceacee.md"
     }
   }
 }
