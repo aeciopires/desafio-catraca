@@ -44,8 +44,8 @@
     "F05": {
       "name": "API de parceiros + OpenAPI",
       "wave": 3,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F05-api-parceiros",
       "pr": "",
       "latestReport": ""
     },
