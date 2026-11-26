@@ -2,11 +2,13 @@
 // changes a ticket status, and it only ever changes tickets that are still pending.
 import { withTransaction } from '../db/pool.ts';
 import { logger } from '../observability/logger.ts';
+import { recordGatewayCall } from '../observability/metrics.ts';
 
 interface DueJob {
   id: string;
   ticket_id: string;
   decision: 'approved' | 'declined';
+  created_at: Date;
 }
 
 /** Processes due payment jobs and returns how many were handled. */
@@ -14,7 +16,7 @@ export async function processDuePayments(limit = 50): Promise<number> {
   return withTransaction(async (client) => {
     // SKIP LOCKED lets several workers run without processing the same job twice.
     const { rows: jobs } = await client.query<DueJob>(
-      `SELECT id, ticket_id, decision FROM payment_jobs
+      `SELECT id, ticket_id, decision, created_at FROM payment_jobs
         WHERE state = 'scheduled' AND due_at <= now()
         ORDER BY due_at
         FOR UPDATE SKIP LOCKED
@@ -32,6 +34,8 @@ export async function processDuePayments(limit = 50): Promise<number> {
         `UPDATE payment_jobs SET state = 'done', processed_at = now() WHERE id = $1`,
         [job.id],
       );
+      // The job's created_at equals its ticket's created_at (same transaction, same now()).
+      recordGatewayCall(job.decision, (result.rowCount ?? 0) > 0, job.created_at);
       logger.info(
         {
           ticketId: job.ticket_id,

@@ -21,6 +21,8 @@ x-app-env: &app-env
   LOG_LEVEL: ${LOG_LEVEL:-info}
   OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-true}
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+  # Metrics are scraped by Prometheus (prom-client), not pushed through OpenTelemetry.
+  OTEL_METRICS_EXPORTER: none
 
 services:
   postgres:
@@ -51,7 +53,7 @@ services:
 
   app:
     <<: *app-image
-    command: ['node', 'src/main.ts']
+    command: ['node', '--import', './src/observability/otel.ts', 'src/main.ts']
     environment:
       <<: *app-env
       OTEL_SERVICE_NAME: catraca-app
@@ -65,7 +67,7 @@ services:
 
   worker:
     <<: *app-image
-    command: ['node', 'src/worker/main.ts']
+    command: ['node', '--import', './src/observability/otel.ts', 'src/worker/main.ts']
     environment:
       <<: *app-env
       OTEL_SERVICE_NAME: catraca-worker
@@ -87,9 +89,13 @@ services:
     command: ['--config=/etc/otelcol/config.yaml']
     volumes:
       - ./docker/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    # The image has no shell/wget for a healthcheck: "up" waits for it to be running, and the
+    # SDK retries/buffers while it starts.
     depends_on:
-      - jaeger
-      - loki
+      jaeger:
+        condition: service_healthy
+      loki:
+        condition: service_started
     restart: unless-stopped
 
   jaeger:
@@ -97,6 +103,11 @@ services:
     profiles: ['observability']
     ports:
       - '${JAEGER_UI_PORT:-16686}:16686'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:13133/status']
+      interval: 3s
+      timeout: 3s
+      retries: 30
     restart: unless-stopped
 
   loki:
@@ -117,6 +128,11 @@ services:
       - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - '${PROMETHEUS_PORT:-9090}:9090'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9090/-/ready']
+      interval: 3s
+      timeout: 3s
+      retries: 30
     restart: unless-stopped
 
   grafana:
@@ -132,10 +148,18 @@ services:
       - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - '${GRAFANA_PORT:-3000}:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/api/health']
+      interval: 3s
+      timeout: 3s
+      retries: 40
     depends_on:
-      - prometheus
-      - loki
-      - jaeger
+      prometheus:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+      loki:
+        condition: service_started
     restart: unless-stopped
 
   tools:

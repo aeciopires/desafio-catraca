@@ -6,6 +6,7 @@ import { query } from '../../db/pool.ts';
 import { hashApiKey } from '../../db/seed.ts';
 import { listPublishedEvents } from '../../domain/events.ts';
 import { purchaseTicket } from '../../domain/purchase.ts';
+import { purchasesRejected } from '../../observability/metrics.ts';
 import { findTicketById } from '../../domain/tickets.ts';
 import { isDomainError } from '../../lib/errors.ts';
 import { toIsoOffset } from '../../lib/time.ts';
@@ -114,7 +115,10 @@ export default async function partnerRoutes(app: FastifyInstance): Promise<void>
     { schema: partnerSchemas.purchase },
     async (request, reply) => {
       const body = parsePurchaseBody(request);
-      if (!body) return sendError(reply, 422, 'invalid_request');
+      if (!body) {
+        purchasesRejected.inc({ reason: 'invalid_request' });
+        return sendError(reply, 422, 'invalid_request');
+      }
       try {
         const ticket = await purchaseTicket({
           eventId: request.params.eventId,

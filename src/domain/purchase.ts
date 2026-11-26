@@ -5,6 +5,7 @@ import { getGateway } from '../gateway/payment-gateway.ts';
 import { DomainError } from '../lib/errors.ts';
 import { newId, newTicketCode } from '../lib/ids.ts';
 import { logger } from '../observability/logger.ts';
+import { purchasesRejected, ticketsCreated } from '../observability/metrics.ts';
 import { countOccupiedSeats, lockEvent } from './seats.ts';
 import type { SalesChannel, TicketRow } from './types.ts';
 
@@ -77,16 +78,19 @@ async function insertPendingTicket(
  */
 export async function purchaseTicket(input: PurchaseInput): Promise<TicketRow> {
   if (typeof input.cardNumber !== 'string' || !CARD_RE.test(input.cardNumber)) {
+    purchasesRejected.inc({ reason: 'invalid_card' });
     throw new DomainError('invalid_card', 'O número do cartão deve ter 16 dígitos');
   }
 
   const ticket = await withTransaction(async (client) => {
     const event = await lockEvent(client, input.eventId);
     if (!event || event.status !== 'published') {
+      purchasesRejected.inc({ reason: 'event_not_available' });
       throw new DomainError('event_not_available', 'Evento não disponível para venda');
     }
     const occupied = await countOccupiedSeats(client, event.id);
     if (occupied >= event.capacity) {
+      purchasesRejected.inc({ reason: 'sold_out' });
       throw new DomainError('sold_out', 'Ingressos esgotados');
     }
 
@@ -104,6 +108,7 @@ export async function purchaseTicket(input: PurchaseInput): Promise<TicketRow> {
     return created;
   });
 
+  ticketsCreated.inc({ channel: ticket.channel });
   logger.info(
     { ticketId: ticket.id, eventId: ticket.event_id, channel: ticket.channel },
     'ticket purchased (pending)',
