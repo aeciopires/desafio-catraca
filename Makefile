@@ -16,7 +16,7 @@ SERVICE ?= app
 COMPOSE := docker compose -p $(COMPOSE_PROJECT_NAME)
 
 .PHONY: help check-os check-dependencies check-ports install build build-multiarch up down restart clean \
-	logs ps seed psql lint typecheck test test-unit test-integration gates toc toc-check check-spec \
+	logs ps seed psql lint typecheck test tests test-unit test-integration gates toc toc-check check-spec \
 	check-reports check-final evaluator-flow
 
 help: ## Show this help
@@ -77,6 +77,8 @@ test-integration: ## up -> integration tests -> down, with summary
 
 test: ## up -> lint, typecheck, unit and integration tests -> down
 	@bash scripts/run-tests.sh all
+
+tests: test ## Alias of `make test`
 
 gates: ## All gates: spec, reports, TOC, lint, typecheck, unit, integration
 	@bash scripts/gates.sh

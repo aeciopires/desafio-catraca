@@ -38,7 +38,7 @@ Todo erro do Makefile, dos scripts, do app, do worker e dos agentes segue o mesm
 | `UP-003` | `up.sh` | App saudável mas porta inacessível no host | Firewall/porta; `make logs SERVICE=app` |
 | `DOWN-001`/`DOWN-002` | `down.sh` | Falha ao derrubar / contêiner remanescente | `docker rm -f <id>` |
 | `TEST-001..004` | `run-tests.sh` | Subida para testes, build da imagem de testes, suíte desconhecida, testes falhando | Ver saída do Vitest; `KEEP_UP=1` para depurar |
-| `GATE-001..003` | `gates.sh` | Algum gate falhou / Node ausente no host | Ver a etapa indicada |
+| `GATE-001`/`GATE-003` | `gates.sh` | Um gate falhou / resumo final de gates reprovados | Ver a etapa indicada |
 | `TOC-001` | `gen-toc.mjs` | TOC desatualizado | `make toc` |
 | `SPEC-000..012` | `check-spec.mjs` | PRD/contratos inconsistentes | Seguir o "Como resolver" exibido |
 | `REPORT-001..003` | `check-reports.sh` | Relatório incompleto ou alterado após commit | Gerar relatório **novo** |

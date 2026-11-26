@@ -51,6 +51,12 @@ O Postgres e o OpenTelemetry Collector não publicam portas no host (acesso via 
 | `UP_TIMEOUT` | `180` | Segundos de espera pelos healthchecks no `make up` |
 | `ALLOW_UNSUPPORTED_OS` | `0` | `1` permite rodar fora da matriz de SO suportada |
 | `KEEP_UP` | `0` | `1` mantém o ambiente no ar após `make test-*` (depuração) |
+| `SKIP_UP` | `0` | `1` faz `make test-*` usar o ambiente já no ar (não sobe de novo) |
+| `FAST` | `0` | `make evaluator-flow`: `1` só espera a decisão do gateway no passo 8, em vez dos 45 s completos |
+| `OTEL_SDK_DISABLED` | `true` (`false` quando `OBSERVABILITY=1`) | Liga/desliga OpenTelemetry no app e no worker; definido automaticamente pelo `make up` |
+| `NODE_IMAGE` | `node:26.13.1-trixie-slim` | Imagem usada pelos scripts quando o Node do host não está disponível |
+
+Variáveis internas (lidas pelo código, sem repasse no Compose; úteis só para rodar o app fora do Docker): `APP_TZ_OFFSET` (`-03:00`), `DB_POOL_MAX` (`20`), `SESSION_TTL_DAYS` (`7`), `DATABASE_URL`, `HOST`, `PORT`, `METRICS_PORT` (`9464`, worker).
 
 ## Exemplos
 

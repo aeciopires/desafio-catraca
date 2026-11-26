@@ -12,6 +12,7 @@
     - [Worker — `src/worker/payment-worker.ts` e `src/worker/main.ts`](#worker--srcworkerpayment-workerts-e-srcworkermaints)
     - [Consultas — `src/domain/tickets.ts`](#consultas--srcdomainticketsts)
   - [Prova de R07](#prova-de-r07)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -75,6 +76,16 @@ Recusa libera a vaga automaticamente: vaga ocupada é derivada de `status IN ('p
 - Lock pessimista por evento serializa compra, edição de lotação e cancelamento.
 - Trigger `tickets_capacity_guard` (F01) como rede de segurança.
 - Testes: 30 compras concorrentes × lotação 5 em 20 eventos novos (sempre 5 ingressos); 200 concorrentes em lotação 37.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Horário da resposta | `due_at = now() + delay` | `clock_timestamp() + delay` | `now()` é o início da transação; uma compra que esperou o lock do evento teria a resposta antecipada |
+| Colisão de código | até 5 tentativas | até 5 tentativas com `SAVEPOINT`; na 5ª o erro original (`23505`) é relançado e nada é criado | Mantém a transação válida entre tentativas |
+| Log | — | `ticket purchased (pending)` (info) | Diagnóstico e correlação com traces |
 
 ## Fora do escopo
 

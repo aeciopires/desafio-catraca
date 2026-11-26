@@ -10,6 +10,7 @@
     - [Autenticação](#autenticação)
     - [Rotas](#rotas)
     - [OpenAPI](#openapi)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -52,6 +53,16 @@ Hook `onRequest` no escopo do plugin (roda antes do parse do corpo): `X-Api-Key`
 ### OpenAPI
 
 `@fastify/swagger` (OpenAPI 3.0) + `@fastify/swagger-ui` em `/api/docs`; JSON em `/api/openapi.json`. `securitySchemes.ApiKeyAuth` (`apiKey`, header `X-Api-Key`), exemplos do brief (`evt_8f2k`, `tkt_51xq`, `K7Q2M9XA`) e todas as respostas de erro.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Validação do Fastify | `attachValidation: true` | `setValidatorCompiler(() => () => true)` e serializador `JSON.stringify`, no escopo do plugin | O validador padrão converte tipos (um `cardNumber` numérico viraria texto e seria aceito); assim a validação é toda manual e os campos da resposta saem exatos |
+| Content-Type da compra | — | Só `application/json` (ou `+json`); outros → `422 invalid_request` | O `@fastify/formbody` global transformaria um formulário numa compra válida |
+| Teste de concorrência | `concurrency.test.ts` | `concurrency-api.test.ts` | Nome distinto do teste de domínio da F03 |
 
 ## Fora do escopo
 

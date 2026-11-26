@@ -11,6 +11,7 @@
     - [Fluxo](#fluxo)
     - [Métricas](#métricas)
     - [Grafana](#grafana)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -70,6 +71,19 @@ Todas com manifest `linux/amd64` + `linux/arm64`.
 ### Grafana
 
 Provisionamento em `docker/grafana/provisioning/`: datasources Prometheus (padrão), Loki (`derivedFields` `trace_id` → Jaeger) e Jaeger (`tracesToLogsV2` → Loki por `trace_id`). Dashboards em `docker/grafana/dashboards/`: **Catraca — Negócio** (vendas por canal, esgotados, pendentes, receita, check-ins, estornos, latência do gateway) e **Catraca — Técnico** (RPS, p50/p95 por rota, erros 5xx, fila do worker, logs recentes).
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Hook ESM | — | dependência direta `import-in-the-middle@3.7.0` registrada em `otel.ts` (pino, pg, fastify, http/https) | Sem o hook, módulos ESM não são instrumentados (sem `trace_id` nos logs, sem spans) |
+| Spans do Fastify | instrumentação fastify | não há: `auto-instrumentations-node@0.83.1` não inclui mais Fastify | Traces mostram o span HTTP do servidor + spans do `pg` |
+| Spans do `pg` | todos | só dentro de uma requisição (`requireParentSpan: true`) | O polling do worker (a cada 200 ms) inundaria o Jaeger; logs do worker chegam ao Loki sem `trace_id` |
+| Prontidão do Loki | — | `min_ready_duration: 0s` e `scripts/up.sh` espera até 30 s por `/ready` | O Loki demora ~15 s para ficar pronto por padrão |
+| Rótulos | — | todas as séries têm o rótulo `service` (`catraca-app`/`catraca-worker`) | Distinguir app e worker nos dashboards |
+| Healthchecks | todos os serviços | Jaeger, Prometheus e Grafana; Loki e Collector não têm shell na imagem | Limitação das imagens oficiais |
 
 ## Fora do escopo
 

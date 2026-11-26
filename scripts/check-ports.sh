@@ -15,22 +15,26 @@ own_ports="$(docker ps --filter "label=com.docker.compose.project=$COMPOSE_PROJE
 
 port_in_use() {
   local port="$1"
-  if command -v ss >/dev/null 2>&1; then
+  # Linux: ss is authoritative. Elsewhere (macOS, minimal images) try to connect: the lsof
+  # shipped by BusyBox ignores its filters and would report every port as busy.
+  if command -v ss >/dev/null 2>&1 && ss -ltnH >/dev/null 2>&1; then
     ss -ltnH "sport = :$port" 2>/dev/null | grep -q .
-  elif command -v lsof >/dev/null 2>&1; then
-    lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
   else
     (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null
   fi
 }
 
+# Best-effort "process (pid N)" for the message; empty when it cannot be determined reliably.
 who_uses() {
-  local port="$1"
-  if command -v lsof >/dev/null 2>&1; then
-    lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | awk 'NR==2 {print $1" (pid "$2")"}'
-  elif command -v ss >/dev/null 2>&1; then
-    ss -ltnpH "sport = :$port" 2>/dev/null | grep -o 'users:(([^)]*' | head -1 | sed 's/users:((//'
+  local port="$1" out=""
+  if command -v ss >/dev/null 2>&1; then
+    out="$(ss -ltnpH "sport = :$port" 2>/dev/null | grep -o 'users:(("[^"]*",pid=[0-9]*' | head -1 |
+      sed 's/users:(("\([^"]*\)",pid=\([0-9]*\)/\1 (pid \2)/')"
   fi
+  if [ -z "$out" ] && command -v lsof >/dev/null 2>&1; then
+    out="$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | awk 'NR==2 && $2 ~ /^[0-9]+$/ {print $1" (pid "$2")"}')"
+  fi
+  printf '%s' "$out"
 }
 
 failed=0
