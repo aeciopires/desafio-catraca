@@ -49,7 +49,7 @@ FROM tickets WHERE event_id = $1
 
 ### Seção — `src/app/sections/dashboard.ts` + `views/sections/dashboard.ejs`
 
-`order: 10` (topo da página). Elementos: `dash-confirmed`, `dash-pending`, `dash-checkins`, `dash-available`, `dash-revenue` (formato `R$ 350,00`), `dash-refunded`, cada um com rótulo em pt-BR (Confirmados, Pendentes, Check-ins, Vagas disponíveis, Receita, Estornados).
+`order: 10` (primeira das seções da página de gestão, logo após os dados e o formulário de edição do evento). Elementos: `dash-confirmed`, `dash-pending`, `dash-checkins`, `dash-available`, `dash-revenue` (formato `R$ 350,00`), `dash-refunded`, cada um com rótulo em pt-BR (Confirmados, Pendentes, Check-ins, Vagas disponíveis, Receita, Estornados).
 
 ## Fora do escopo
 

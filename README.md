@@ -46,9 +46,10 @@ Portas ocupadas? Todas são configuráveis: `APP_PORT=8081 make up` — veja [co
 | Produto (`$WEB`) | <http://localhost:8080> |
 | API de parceiros (`$API`) | <http://localhost:8080> (rotas em `/api/partner/...`) |
 | Swagger / OpenAPI | <http://localhost:8080/api/docs> · <http://localhost:8080/api/openapi.json> |
-| Grafana | <http://localhost:3000> (admin / admin) |
+| Grafana (dashboards "Catraca — Negócio" e "Catraca — Técnico") | <http://localhost:3000> (admin / admin) |
 | Prometheus | <http://localhost:9090> |
 | Jaeger | <http://localhost:16686> |
+| Loki (via Grafana → Explore) | <http://localhost:3100> |
 
 (As portas mudam se você definir `APP_PORT`, `GRAFANA_PORT`, etc.)
 
@@ -78,18 +79,20 @@ curl -s -H "X-Api-Key: $KEY" "$API/api/partner/events"
 | Porta de entrada dos agentes | [AGENTS.md](AGENTS.md) (e [CLAUDE.md](CLAUDE.md), que aponta para ele) |
 | Agentes (implementador e avaliador) | [.claude/agents/](.claude/agents/) |
 | Arquitetura com diagramas e analogias | [docs/architecture/](docs/architecture/) |
-| Operação | [docs/operations/](docs/operations/) |
+| Operação (configuração, erros, imagens, observabilidade) | [docs/operations/](docs/operations/) |
 | Contribuição / requisitos | [CONTRIBUTING.md](CONTRIBUTING.md) · [REQUIREMENTS.md](REQUIREMENTS.md) |
 
 ### PRs das waves
 
-| Wave | Features | PRs |
-| --- | --- | --- |
-| W1 | F01 | _a preencher_ |
-| W2 (paralela) | F02 ∥ F03 | _a preencher_ |
-| W3 (paralela) | F04 ∥ F05 | _a preencher_ |
-| W4 (paralela) | F06 ∥ F07 | _a preencher_ |
-| W5 (paralela) | F08 ∥ F09 | _a preencher_ |
+| Wave | Features | PRs | Commits intercalados (primeiro → último, -03:00) |
+| --- | --- | --- | --- |
+| W1 | F01 | [#1](https://github.com/aeciopires/desafio-catraca/pull/1) | — |
+| W2 (paralela) | F02 ∥ F03 | [#3](https://github.com/aeciopires/desafio-catraca/pull/3) · [#4](https://github.com/aeciopires/desafio-catraca/pull/4) | F02 23:26:24 → 23:28:32 · F03 23:25:41 → 23:29:20 |
+| **W3 (paralela — prova principal)** | F04 ∥ F05 | [#5](https://github.com/aeciopires/desafio-catraca/pull/5) · [#6](https://github.com/aeciopires/desafio-catraca/pull/6) | F04 23:39:45 → 23:43:43 · F05 23:39:35 → 23:48:18 |
+| W4 (paralela) | F06 ∥ F07 | [#8](https://github.com/aeciopires/desafio-catraca/pull/8) · [#9](https://github.com/aeciopires/desafio-catraca/pull/9) | F06 00:01:20 → 00:06:41 · F07 00:01:07 → 00:09:10 |
+| W5 (paralela) | F08 ∥ F09 | [#10](https://github.com/aeciopires/desafio-catraca/pull/10) · [#11](https://github.com/aeciopires/desafio-catraca/pull/11) | F08 00:30:40 → 00:36:19 · F09 00:30:43 → 00:42:07 |
+
+Em todas as waves paralelas, o primeiro commit de cada PR é anterior ao último commit do outro (veja a aba *Commits* de cada PR). PRs de ajuste do harness: [#2](https://github.com/aeciopires/desafio-catraca/pull/2), [#7](https://github.com/aeciopires/desafio-catraca/pull/7). Na W4 houve conflito real em `scripts/evaluator-flow.sh`, resolvido na integração; a F07 foi **reprovada** na primeira avaliação (dependia do check-in da F06) e aprovada na reavaliação após a integração — os dois relatórios estão em [docs/features/F07-cancelamento/reports/](docs/features/F07-cancelamento/reports/).
 
 ## Decisões
 

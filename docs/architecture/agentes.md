@@ -44,8 +44,8 @@ gantt
     F06 Check-in           :done, 00:01, 6m
     F07 Cancelamento       :done, 00:01, 8m
     section W5
-    F08 Painel             :active, 00:36, 10m
-    F09 Observabilidade    :active, 00:36, 15m
+    F08 Painel             :done, 00:30, 6m
+    F09 Observabilidade    :done, 00:30, 12m
 ```
 
 - Cada feature de uma wave paralela roda num **git worktree** próprio, com `COMPOSE_PROJECT_NAME` e portas próprios, para que dois ambientes Docker convivam.
