@@ -9,6 +9,7 @@
   - [Decisões técnicas](#decisões-técnicas)
     - [Domínio — `src/domain/dashboard.ts`](#domínio--srcdomaindashboardts)
     - [Seção — `src/app/sections/dashboard.ts` + `views/sections/dashboard.ejs`](#seção--srcappsectionsdashboardts--viewssectionsdashboardejs)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -50,6 +51,15 @@ FROM tickets WHERE event_id = $1
 ### Seção — `src/app/sections/dashboard.ts` + `views/sections/dashboard.ejs`
 
 `order: 10` (primeira das seções da página de gestão, logo após os dados e o formulário de edição do evento). Elementos: `dash-confirmed`, `dash-pending`, `dash-checkins`, `dash-available`, `dash-revenue` (formato `R$ 350,00`), `dash-refunded`, cada um com rótulo em pt-BR (Confirmados, Pendentes, Check-ins, Vagas disponíveis, Receita, Estornados).
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Assinatura | `getDashboard(eventId)` | `getDashboard(event: EventRow)` + função pura `buildDashboard(counts, event)` | Lotação e status do evento são necessários para as vagas; a função pura é testada sem banco |
+| Posição | topo da página | primeira das seções, depois dos dados e do formulário de edição | Ordem de renderização da página de gestão (F02) |
 
 ## Fora do escopo
 

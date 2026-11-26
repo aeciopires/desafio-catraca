@@ -9,6 +9,7 @@
   - [Decisões técnicas](#decisões-técnicas)
     - [Domínio — `src/domain/cancellation.ts`](#domínio--srcdomaincancellationts)
     - [Seção — `src/app/sections/cancellation.ts` + `views/sections/cancellation.ejs`](#seção--srcappsectionscancellationts--viewssectionscancellationejs)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -45,6 +46,15 @@ Tudo acontece no `COMMIT` (muito abaixo dos 10 s). Se o worker já tiver lido o 
 
 - `order: 90`. Evento publicado: botão `data-testid="cancel-button"` (form `POST /organizer/events/:id/cancel`, com `confirm()` no navegador). Evento cancelado: aviso `data-testid="event-cancelled"` "Evento cancelado em <data>. Esta ação é irreversível."
 - `register(app)`: `POST /organizer/events/:id/cancel` → dono (404 se não for) → `cancelEvent` → `303` para a página com `?ok=cancelled`; `not_cancellable` → `409` com `form-error`.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Ordem das escritas | ingressos (4, 5) antes dos jobs (6) | jobs `scheduled → obsolete` **antes** dos ingressos | O worker trava job → ingresso; a mesma ordem evita *deadlock* entre cancelamento e worker |
+| Mensagem de sucesso | flash da F02 | A própria seção mostra `data-testid="flash"` "Evento cancelado." quando `?ok=cancelled` | Evita editar arquivo da F02 durante a wave paralela |
 
 ## Fora do escopo
 

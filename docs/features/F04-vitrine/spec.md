@@ -7,6 +7,7 @@
   - [Regras cobertas](#regras-cobertas)
   - [Consome](#consome)
   - [Decisões técnicas](#decisões-técnicas)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -37,6 +38,16 @@ Arquivo único de rotas: `src/app/routes/showcase.ts` (o *stub* da F01). Views e
 | `GET /me/tickets` | `requireParticipant`. Uma linha `data-testid="ticket-row"` por ingresso (mais recente primeiro) com `ticket-event` (nome), `ticket-status` (rótulo pt-BR: pendente/confirmado/recusado/cancelado/estornado) e `ticket-code` |
 
 O cabeçalho (F01) mostra links "Vitrine", "Meus ingressos" (participante) e "Meus eventos" (organizador).
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Implementado | Origem |
+| --- | --- | --- |
+| Visitante que tenta comprar | `302 /login?next=/events/{id}` (volta à página do evento depois do login, não ao URL do POST) | Observação do avaliador da F04, corrigida no PR #7 |
+| Organizador em rotas de participante | `403` (guarda compartilhada `requireParticipant`) | F01 |
+| `data-testid` extras | `event-name`, `event-date`, `event-venue`, `event-price`, `available-seats`, `login-to-buy`, `organizer-notice`, `showcase-empty`, `tickets-empty` | Testes |
 
 ## Fora do escopo
 

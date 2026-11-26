@@ -42,6 +42,7 @@
   - [12. Riscos e mitigações](#12-riscos-e-mitigações)
   - [13. Checklist final de entrega](#13-checklist-final-de-entrega)
   - [14. Pontos em aberto](#14-pontos-em-aberto)
+  - [15. Execução e desvios em relação a este plano](#15-execução-e-desvios-em-relação-a-este-plano)
 
 <!-- TOC -->
 
@@ -69,7 +70,7 @@ Princípio que guia tudo: **as regras só valem se valerem quando as features se
 | Interface web | HTML renderizado no servidor (`@fastify/view` + EJS), formulários simples | Nenhum critério avalia design; zero build de frontend; fácil de testar por HTTP |
 | Banco | PostgreSQL (última major estável) | Transações e `SELECT ... FOR UPDATE` para garantir R07; `FOR UPDATE SKIP LOCKED` para o worker |
 | Acesso a dados | `pg` + SQL explícito; migrações SQL versionadas com runner próprio idempotente | Controle total das queries de concorrência; sem "mágica" de ORM |
-| Senha | `argon2` (ou `bcrypt` se houver problema de build multi-arch) | Hash seguro |
+| Senha | `bcryptjs` (JS puro: mesma imagem em amd64 e arm64, sem compilação nativa) | Hash seguro |
 | Sessão | Cookie assinado `HttpOnly` + tabela `sessions` no Postgres | Sobrevive a restart; sem dependência extra |
 | Testes | Vitest (unitários e integração) | TypeScript nativo, rápido |
 | Lint/format | ESLint + Prettier, `tsc --noEmit`, `hadolint`, `shellcheck`, `markdownlint-cli2` | Gates objetivos |
@@ -168,7 +169,7 @@ flowchart LR
     app[App + Worker<br/>OTel SDK] -- OTLP traces/logs/metrics --> col[OTel Collector]
     col -- traces --> jaeger[Jaeger]
     col -- logs (OTLP) --> loki[Loki]
-    col -- métricas --> prom[Prometheus]
+    app -- scrape /metrics --> prom[Prometheus]
     prom --> graf[Grafana]
     loki --> graf
     jaeger --> graf
@@ -204,7 +205,7 @@ flowchart LR
 │   ├── check-deps.sh         # valida docker, compose, colima, mise...
 │   ├── check-ports.sh        # porta em uso → erro com causa + variável a ajustar
 │   ├── install.sh            # instala mise (usuário) + `mise install` + npm ci
-│   ├── wait-healthy.sh       # espera healthchecks; em falha mostra logs
+│   ├── up.sh / down.sh / gates.sh / run-tests.sh / install.sh  # mesmos alvos do Makefile, sem make
 │   ├── gen-toc.mjs           # TOC idempotente entre <!-- TOC --> ... <!-- TOC -->
 │   ├── check-reports.sh      # relatórios imutáveis + state.json consistente
 │   └── evaluator-flow.sh     # passos de curl do Fluxo do avaliador
@@ -343,9 +344,9 @@ Fora dessa matriz: mensagem clara (`[ERRO][OS-001] SO não suportado: <detectado
 ### 5.4 Imagens Docker multiplataforma
 
 - `docker/app.Dockerfile` multi-stage (`deps` → `build` → `runtime`), base oficial `node:<LTS>-bookworm-slim` (multi-arch), usuário não-root, `HEALTHCHECK`, `tini` como init.
-- Todas as imagens de terceiros (postgres, otel-collector, prometheus, grafana, jaeger, loki) com tag fixa e manifest multi-arch (amd64 + arm64) — verificado com `docker buildx imagetools inspect` durante a fase 1 e registrado em `docs/operations/images.md`.
+- Todas as imagens de terceiros (postgres, otel-collector, prometheus, grafana, jaeger, loki) com tag fixa e manifest multi-arch (amd64 + arm64) — verificado com `docker buildx imagetools inspect` durante a fase 1 e registrado em `docs/operations/imagens.md`.
 - `make build-multiarch` constrói `linux/amd64,linux/arm64`. No macOS arm64 com Colima a imagem nativa é `linux/arm64`; em Ubuntu amd64, `linux/amd64`.
-- Dependências nativas (argon2) testadas nas duas arquiteturas; se houver problema, trocar por `bcryptjs` (puro JS).
+- Sem dependências nativas: `bcryptjs` é JS puro, então a imagem constrói igual nas duas arquiteturas.
 
 ### 5.5 Variáveis de ambiente e portas
 
@@ -379,7 +380,7 @@ Padrão de mensagem em todo o projeto (Makefile, scripts, app, worker, agentes):
 ```
 
 - `check-ports.sh`: detecta porta em uso (`ss`/`lsof`), mostra o processo e a variável a trocar.
-- `wait-healthy.sh`: timeout por serviço; em falha imprime `docker compose ps` e as últimas 50 linhas de log do serviço problemático.
+- `up.sh`: `docker compose up -d --wait` com timeout (`UP_TIMEOUT`); em falha imprime `docker compose ps -a` e as últimas linhas de log de `migrate`, `app`, `worker` e `postgres`.
 - App: erros com `code` estável (`DB_UNAVAILABLE`, `MIGRATION_FAILED`, `GATEWAY_TIMEOUT`...), `trace_id` em todo log, fail-fast na inicialização com a variável/porta culpada.
 - Catálogo de códigos em `docs/operations/troubleshooting.md`.
 - Agentes: `AGENTS.md` instrui a registrar no relatório o comando, a saída e o código de erro em vez de "deu erro".
@@ -590,20 +591,35 @@ Primeira linha: "Leia e siga o [AGENTS.md](AGENTS.md)". Depois, guardrails:
 
 ## 13. Checklist final de entrega
 
-- [ ] Repositório público; tudo na `main`.
-- [ ] Clone limpo → `make up` → produto em `$WEB` com seed, sem outro passo.
-- [ ] Fluxo do avaliador 1–17 passa manualmente e via `make evaluator-flow`.
-- [ ] Rajada do passo 15 repetida ≥ 10 vezes em eventos novos: sempre 5×`202`/25×`409`.
-- [ ] `make gates` passa (lint, typecheck, check-spec, check-reports, toc-check, unit, integration).
-- [ ] `make down`: nenhuma porta responde, `docker ps` sem containers do projeto; `make up` de novo funciona.
-- [ ] PRD, spec/plano/contrato de F01–F09, relatórios (um commit cada), `state/project-state.json` todo `done`.
-- [ ] PRs da wave paralela mergeados, com commits intercalados, linkados no README.
-- [ ] README com: Como rodar, Endereços, Credenciais, Mapa dos artefatos, Decisões.
-- [ ] `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `REQUIREMENTS.md` + por SO, `docs/` com diagramas e analogias, TOC em todo `.md`.
-- [ ] Swagger em `/api/docs`; Grafana com dashboards e correlação Prometheus ↔ Jaeger ↔ Loki.
+- [x] Repositório público; tudo na `main`.
+- [x] Clone limpo → `make up` → produto em `$WEB` com seed, sem outro passo.
+- [x] Fluxo do avaliador 1–17 passa manualmente e via `make evaluator-flow`.
+- [x] Rajada do passo 15 repetida ≥ 10 vezes em eventos novos: sempre 5×`202`/25×`409`.
+- [x] `make gates` passa (lint, typecheck, check-spec, check-reports, toc-check, unit, integration).
+- [x] `make down`: nenhuma porta responde, `docker ps` sem containers do projeto; `make up` de novo funciona.
+- [x] PRD, spec/plano/contrato de F01–F09, relatórios (um commit cada), `state/project-state.json` todo `done`.
+- [x] PRs da wave paralela mergeados, com commits intercalados, linkados no README.
+- [x] README com: Como rodar, Endereços, Credenciais, Mapa dos artefatos, Decisões.
+- [x] `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `REQUIREMENTS.md` + por SO, `docs/` com diagramas e analogias, TOC em todo `.md`.
+- [x] Swagger em `/api/docs`; Grafana com dashboards e correlação Prometheus ↔ Jaeger ↔ Loki.
 
 ## 14. Pontos em aberto
 
 - **"Número de chamadas ao modelo"** (pedido de métricas): o produto não chama modelo de IA. Proposta: medir chamadas ao gateway de pagamento (o "provedor externo" do domínio) e, opcionalmente, registrar duração/resultado das avaliações dos agentes como métricas via script. Confirmar se é isso o esperado.
-- **Versões exatas** (Node LTS, PostgreSQL, imagens de observabilidade): serão fixadas na fase 0 consultando as fontes oficiais, e registradas em `docs/operations/images.md`.
+- **Versões exatas** (Node LTS, PostgreSQL, imagens de observabilidade): serão fixadas na fase 0 consultando as fontes oficiais, e registradas em `docs/operations/imagens.md`.
 - **Suporte oficial do Docker Engine ao Ubuntu 26.04**: confirmar em <https://docs.docker.com/engine/install/ubuntu/> na fase 0.
+
+## 15. Execução e desvios em relação a este plano
+
+Plano executado de 2026-11-25 a 2026-11-26. Situação final: as 9 features `done` em [state/project-state.json](state/project-state.json), PRs #1–#12 mergeados, todas as waves W2–W5 em paralelo com commits intercalados (ver README).
+
+| Item do plano | O que mudou | Onde está registrado |
+| --- | --- | --- |
+| Métricas via Collector (2.6) | Prometheus faz *scrape* direto de `/metrics` no app e no worker; o Collector cuida só de traces e logs | spec da F09 |
+| `argon2` (2.1) | `bcryptjs` (JS puro, sem build nativo) | spec da F01 |
+| `wait-healthy.sh` (3, 5.6) | `docker compose up --wait` dentro de `scripts/up.sh` | spec da F01 |
+| Node no host para os gates | Opcional: `node_run` cai para a imagem do Node | spec da F01, PR #2 |
+| Instrumentação Fastify | Indisponível na versão fixada; traces com HTTP + `pg` | spec da F09 |
+| Evento cancelado na F07 | 1ª avaliação reprovou C-F07-06 (dependia da F06); reavaliação após integração aprovou | relatórios da F07 |
+
+Cada spec de feature tem a seção "Desvios registrados na implementação" com os detalhes.

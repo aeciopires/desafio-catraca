@@ -23,7 +23,7 @@ A documentação completa está em [docs/](docs/README.md). Agentes começam por
 ### Pré-requisitos
 
 - Linux (Ubuntu 22.04/24.04/26.04 amd64) ou macOS (Intel/Apple Silicon) com **Colima**.
-- Docker Engine + Docker Compose v2, `git` e `make`. Node.js LTS só é necessário para os gates de documentação (`make gates`).
+- Docker Engine + Docker Compose v2, `git` e `make`. Node.js não é obrigatório: os testes rodam em contêiner e os checadores de documentação usam o Node do host se existir, senão a imagem oficial do Node.
 - Detalhes e instalação oficial por sistema: [REQUIREMENTS.md](REQUIREMENTS.md). Verificação: `make check-os && make check-dependencies`.
 
 ### Comandos
@@ -34,6 +34,7 @@ A documentação completa está em [docs/](docs/README.md). Agentes começam por
 | Derrubar tudo | `make down` | `./scripts/down.sh` |
 | Gates (spec, relatórios, TOC, lint, typecheck, testes unitários e de integração) | `make gates` | `./scripts/gates.sh` |
 | Testes unitários / de integração (sobem e derrubam o ambiente) | `make test-unit` / `make test-integration` | — |
+| Todos os testes (lint, typecheck, unitários, integração) | `make test` (ou `make tests`) | `./scripts/run-tests.sh all` |
 | Instalar ferramentas de desenvolvimento (mise, sem nada global) | `make install` | `./scripts/install.sh` |
 | Todos os alvos | `make help` | — |
 
@@ -84,15 +85,15 @@ curl -s -H "X-Api-Key: $KEY" "$API/api/partner/events"
 
 ### PRs das waves
 
-| Wave | Features | PRs | Commits intercalados (primeiro → último, -03:00) |
+| Wave | Features | PRs | Primeiro → último commit de cada PR (data e hora, -03:00) |
 | --- | --- | --- | --- |
 | W1 | F01 | [#1](https://github.com/aeciopires/desafio-catraca/pull/1) | — |
-| W2 (paralela) | F02 ∥ F03 | [#3](https://github.com/aeciopires/desafio-catraca/pull/3) · [#4](https://github.com/aeciopires/desafio-catraca/pull/4) | F02 23:26:24 → 23:28:32 · F03 23:25:41 → 23:29:20 |
-| **W3 (paralela — prova principal)** | F04 ∥ F05 | [#5](https://github.com/aeciopires/desafio-catraca/pull/5) · [#6](https://github.com/aeciopires/desafio-catraca/pull/6) | F04 23:39:45 → 23:43:43 · F05 23:39:35 → 23:48:18 |
-| W4 (paralela) | F06 ∥ F07 | [#8](https://github.com/aeciopires/desafio-catraca/pull/8) · [#9](https://github.com/aeciopires/desafio-catraca/pull/9) | F06 00:01:20 → 00:06:41 · F07 00:01:07 → 00:09:10 |
-| W5 (paralela) | F08 ∥ F09 | [#10](https://github.com/aeciopires/desafio-catraca/pull/10) · [#11](https://github.com/aeciopires/desafio-catraca/pull/11) | F08 00:30:40 → 00:36:19 · F09 00:30:43 → 00:42:07 |
+| W2 (paralela) | F02 ∥ F03 | [#3](https://github.com/aeciopires/desafio-catraca/pull/3) · [#4](https://github.com/aeciopires/desafio-catraca/pull/4) | F02 2026-11-25 23:26:24 → 2026-11-25 23:32:49 · F03 2026-11-25 23:25:41 → 2026-11-25 23:37:19 |
+| **W3 (paralela — prova principal)** | F04 ∥ F05 | [#5](https://github.com/aeciopires/desafio-catraca/pull/5) · [#6](https://github.com/aeciopires/desafio-catraca/pull/6) | F04 2026-11-25 23:39:45 → 2026-11-25 23:49:23 · F05 2026-11-25 23:39:35 → 2026-11-25 23:56:06 |
+| W4 (paralela) | F06 ∥ F07 | [#8](https://github.com/aeciopires/desafio-catraca/pull/8) · [#9](https://github.com/aeciopires/desafio-catraca/pull/9) | F06 2026-11-26 00:01:20 → 2026-11-26 00:12:03 · F07 2026-11-26 00:01:07 → 2026-11-26 00:28:59 |
+| W5 (paralela) | F08 ∥ F09 | [#10](https://github.com/aeciopires/desafio-catraca/pull/10) · [#11](https://github.com/aeciopires/desafio-catraca/pull/11) | F08 2026-11-26 00:30:40 → 2026-11-26 00:45:34 · F09 2026-11-26 00:30:43 → 2026-11-26 00:47:42 |
 
-Em todas as waves paralelas, o primeiro commit de cada PR é anterior ao último commit do outro (veja a aba *Commits* de cada PR). PRs de ajuste do harness: [#2](https://github.com/aeciopires/desafio-catraca/pull/2), [#7](https://github.com/aeciopires/desafio-catraca/pull/7). Na W4 houve conflito real em `scripts/evaluator-flow.sh`, resolvido na integração; a F07 foi **reprovada** na primeira avaliação (dependia do check-in da F06) e aprovada na reavaliação após a integração — os dois relatórios estão em [docs/features/F07-cancelamento/reports/](docs/features/F07-cancelamento/reports/).
+Em todas as waves paralelas, o primeiro commit de cada PR é anterior ao último commit do outro (veja a aba *Commits* de cada PR; os horários acima vêm da API do GitHub e incluem os commits do relatório de avaliação e do estado). PRs de ajuste do harness: [#2](https://github.com/aeciopires/desafio-catraca/pull/2), [#7](https://github.com/aeciopires/desafio-catraca/pull/7). Na W4 houve conflito real em `scripts/evaluator-flow.sh`, resolvido na integração; a F07 foi **reprovada** na primeira avaliação (dependia do check-in da F06) e aprovada na reavaliação após a integração — os dois relatórios estão em [docs/features/F07-cancelamento/reports/](docs/features/F07-cancelamento/reports/).
 
 ## Decisões
 

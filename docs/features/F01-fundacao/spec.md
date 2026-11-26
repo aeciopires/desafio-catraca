@@ -10,6 +10,7 @@
   - [Contratos internos (Provides)](#contratos-internos-provides)
   - [Seed](#seed)
   - [Harness](#harness)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo da F01](#fora-do-escopo-da-f01)
 
 <!-- TOC -->
@@ -98,6 +99,16 @@ Convenção de HTML para testes: valores que o avaliador confere ficam em elemen
 - `make down`: `docker compose --profile "*" down --remove-orphans` e verifica que as portas não respondem.
 - `make gates`: `lint`, `typecheck`, `check-spec`, `check-reports`, `toc-check`, `test-unit`, `test-integration` (todos em contêiner).
 - Fallback sem `make`: `./scripts/up.sh`, `./scripts/down.sh`, `./scripts/gates.sh`.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Spec original | Implementado | Motivo |
+| --- | --- | --- | --- |
+| Node no host | `make gates` exigia Node no host | `node_run` (em `scripts/lib.sh`) usa o Node do host se funcionar; senão a imagem `node:26.13.1-trixie-slim` (PR #2) | Em clone novo o shim do mise recusa `.mise.toml` não confiável; o host do avaliador pode não ter Node no PATH |
+| Espera pelos serviços | `wait-healthy.sh` | `docker compose up -d --wait` + checagem de `/healthz` em `scripts/up.sh` | Healthchecks do Compose já cobrem a espera; em falha o `up.sh` mostra `ps -a` e os logs |
+| Variável de testes | `BASE_URL` | `TEST_BASE_URL` | O Vitest sobrescreve `process.env.BASE_URL` com `/` |
 
 ## Fora do escopo da F01
 

@@ -30,22 +30,23 @@ flowchart LR
 
 ```mermaid
 gantt
+    title Primeiro → último commit de cada PR (2026-11-25/26, -03:00)
     dateFormat HH:mm
     axisFormat %H:%M
     section W1
     F01 Fundação           :done, 23:00, 20m
     section W2
-    F02 Eventos            :done, 23:26, 3m
-    F03 Compra e pagamento :done, 23:25, 5m
+    F02 Eventos            :done, 23:26, 7m
+    F03 Compra e pagamento :done, 23:25, 12m
     section W3
-    F04 Vitrine            :done, 23:39, 5m
-    F05 API de parceiros   :done, 23:39, 9m
+    F04 Vitrine            :done, 23:39, 10m
+    F05 API de parceiros   :done, 23:39, 17m
     section W4
-    F06 Check-in           :done, 00:01, 6m
-    F07 Cancelamento       :done, 00:01, 8m
+    F06 Check-in           :done, 00:01, 11m
+    F07 Cancelamento       :done, 00:01, 28m
     section W5
-    F08 Painel             :done, 00:30, 6m
-    F09 Observabilidade    :done, 00:30, 12m
+    F08 Painel             :done, 00:30, 15m
+    F09 Observabilidade    :done, 00:30, 17m
 ```
 
 - Cada feature de uma wave paralela roda num **git worktree** próprio, com `COMPOSE_PROJECT_NAME` e portas próprios, para que dois ambientes Docker convivam.

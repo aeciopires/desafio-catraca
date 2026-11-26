@@ -10,6 +10,7 @@
     - [Domínio — `src/domain/events.ts`](#domínio--srcdomaineventsts)
     - [Rotas — `src/app/routes/organizer.ts` (todas com `requireOrganizer`)](#rotas--srcapproutesorganizerts-todas-com-requireorganizer)
     - [Seções extensíveis — `src/app/manage-sections.ts`](#seções-extensíveis--srcappmanage-sectionsts)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -78,6 +79,17 @@ export function renderManagePage(reply, event, extras?: Record<string, unknown>,
 ```
 
 A F02 cria os arquivos `src/app/sections/{checkin,cancellation,dashboard}.ts` exportando `section: ManageSection | null = null` (*stubs*) e `src/app/sections/index.ts` que os agrega. F06, F07 e F08 só preenchem o seu arquivo e a sua view — sem conflito com a F02.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Implementado |
+| --- | --- |
+| Mensagens extras | `Informe uma data de início válida` (data ausente/inválida), `A lotação máxima é 1.000.000`, `O preço máximo é R$ 1.000.000,00` (evitam estouro de `int4`) |
+| Publicar cancelado | `422` com `form-error` "Evento cancelado não pode ser publicado"; status inalterado |
+| Entrada do domínio | `createEvent`/`updateEvent` recebem o formulário cru e validam internamente, para checar "cancelado" antes da validação |
+| Página de gestão | As seções (painel, check-in, cancelamento) aparecem depois dos dados e do formulário de edição |
 
 ## Fora do escopo
 

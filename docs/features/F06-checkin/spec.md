@@ -9,6 +9,7 @@
   - [Decisões técnicas](#decisões-técnicas)
     - [Domínio — `src/domain/checkin.ts`](#domínio--srcdomaincheckints)
     - [Seção — `src/app/sections/checkin.ts` + `src/app/views/sections/checkin.ejs`](#seção--srcappsectionscheckints--srcappviewssectionscheckinejs)
+  - [Desvios registrados na implementação](#desvios-registrados-na-implementação)
   - [Fora do escopo](#fora-do-escopo)
 
 <!-- TOC -->
@@ -55,6 +56,16 @@ O `FOR UPDATE` evita dois check-ins simultâneos do mesmo código liberarem duas
 
 - `order: 20`. Formulário `data-testid="checkin-form"` (campo `code`) sempre exibido, inclusive em evento cancelado (vale a lista).
 - `register(app)`: `POST /organizer/events/:id/checkin` → valida dono (404 se não for), chama `checkIn` e responde `200` com `renderManagePage(reply, event, { checkinResult })`; o resultado aparece em `data-testid="checkin-result"` com a mensagem exata.
+
+## Desvios registrados na implementação
+
+Decisões tomadas durante a implementação e aceitas na avaliação independente. Nenhuma altera o comportamento exigido pelo contrato.
+
+| Tema | Implementado | Motivo |
+| --- | --- | --- |
+| 404 para quem não é dono | Mesma página genérica das rotas do organizador, renderizada na seção | O helper da F02 é privado; importá-lo criaria ciclo de imports |
+| Código vazio | `200` com "Ingresso inválido para este evento" (o campo HTML é `required`) | Cai na regra 1 de R10 |
+| `data-testid` extras | `checkin-code`, `checkin-button` e o atributo `data-result` no resultado | Testes |
 
 ## Fora do escopo
 
