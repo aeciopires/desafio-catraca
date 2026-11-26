@@ -68,10 +68,10 @@
     "F08": {
       "name": "Painel do evento",
       "wave": 5,
-      "status": "todo",
-      "branch": "",
-      "pr": "",
-      "latestReport": ""
+      "status": "done",
+      "branch": "feat/F08-painel",
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/10",
+      "latestReport": "docs/features/F08-painel/reports/2026-11-26T004419-152d3df.md"
     },
     "F09": {
       "name": "Observabilidade",
