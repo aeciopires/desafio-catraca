@@ -55,11 +55,11 @@ Colisão de código (`unique_violation` em `tickets.code`) → nova tentativa co
 
 | Final | Decisão | Atraso (ms × `GATEWAY_DELAY_SCALE`) |
 | --- | --- | --- |
-| `0001` | approved | 2000–4500 |
-| `0002` | declined | 2000–4500 |
+| `0001` | approved | 2000–4000 |
+| `0002` | declined | 2000–4000 |
 | `0003` | approved | 30000–39000 |
 | `0004` | declined | 30000–39000 |
-| outro | declined | 2000–4500 |
+| outro | declined | 2000–4000 |
 
 ### Worker — `src/worker/payment-worker.ts` e `src/worker/main.ts`
 
@@ -86,6 +86,7 @@ Decisões tomadas durante a implementação e aceitas na avaliação independent
 | Horário da resposta | `due_at = now() + delay` | `clock_timestamp() + delay` | `now()` é o início da transação; uma compra que esperou o lock do evento teria a resposta antecipada |
 | Colisão de código | até 5 tentativas | até 5 tentativas com `SAVEPOINT`; na 5ª o erro original (`23505`) é relançado e nada é criado | Mantém a transação válida entre tentativas |
 | Log | — | `ticket purchased (pending)` (info) | Diagnóstico e correlação com traces |
+| Teto dos cartões rápidos | 4500 ms | 4000 ms (revisão final) | Medição real: confirmação do `0001` levou até 4,5 s; o teto de 4 s deixa ~1 s de folga para o limite de 5 s do brief em máquinas mais lentas (ex.: macOS com Colima) |
 
 ## Fora do escopo
 

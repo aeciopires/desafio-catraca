@@ -4,12 +4,12 @@ import { getGateway } from '../../src/gateway/payment-gateway.ts';
 import { ruleForCard, simulateDecision } from '../../src/gateway/simulated-gateway.ts';
 
 const cases = [
-  { card: '4000000000000001', decision: 'approved', min: 2000, max: 4500 },
-  { card: '4000000000000002', decision: 'declined', min: 2000, max: 4500 },
+  { card: '4000000000000001', decision: 'approved', min: 2000, max: 4000 },
+  { card: '4000000000000002', decision: 'declined', min: 2000, max: 4000 },
   { card: '4000000000000003', decision: 'approved', min: 30000, max: 39000 },
   { card: '4000000000000004', decision: 'declined', min: 30000, max: 39000 },
-  { card: '4000000000000099', decision: 'declined', min: 2000, max: 4500 },
-  { card: '4111111111111111', decision: 'declined', min: 2000, max: 4500 },
+  { card: '4000000000000099', decision: 'declined', min: 2000, max: 4000 },
+  { card: '4111111111111111', decision: 'declined', min: 2000, max: 4000 },
 ] as const;
 
 describe('simulated gateway (R08)', () => {

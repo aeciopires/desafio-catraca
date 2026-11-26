@@ -28,7 +28,7 @@
     "F03": {
       "name": "Núcleo de compra e pagamento",
       "wave": 2,
-      "status": "done",
+      "status": "in_review",
       "branch": "feat/F03-compra-pagamento",
       "pr": "https://github.com/aeciopires/desafio-catraca/pull/4",
       "latestReport": "docs/features/F03-compra-pagamento/reports/2026-11-25T233604-9752556.md"
