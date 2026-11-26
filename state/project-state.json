@@ -60,8 +60,8 @@
     "F07": {
       "name": "Cancelamento de evento",
       "wave": 4,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F07-cancelamento",
       "pr": "",
       "latestReport": ""
     },

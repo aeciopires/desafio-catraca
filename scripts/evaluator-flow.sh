@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Evaluator flow (TASK.md, "Fluxo do avaliador") driven by curl against the RUNNING stack.
 # Reproduces the steps observable through HTTP; steps that depend on features of later waves
-# (check-in, cancellation, dashboard) print SKIP until those features land.
+# (check-in, dashboard) print SKIP until those features land.
 #   usage: [APP_PORT=8080] [PARTNER_API_KEY=...] [FAST=1] scripts/evaluator-flow.sh
 #   FAST=1: in step 8, poll until T2 is declined instead of waiting the full 45 s.
 # Bash 3.2 compatible (macOS): no associative arrays, no mapfile, no ${var,,}.
@@ -301,12 +301,12 @@ if [ -n "$E3" ] && publish_event "$JAR_A" "$E3"; then
   done
   rc=0; [ "$st" = "confirmed" ] || rc=1
   check "12" "T6 confirmado antes do cancelamento" "$rc" "status=$st"
+  st5="$(ticket_status "$T5")"
   code="$(curl -s -o /dev/null -w '%{http_code}' -c "$JAR_A" -b "$JAR_A" -X POST \
     "$WEB/organizer/events/$E3/cancel")"
   cancel_at=$((SECONDS - T5_AT))
-  st5="$(ticket_status "$T5")"
-  rc=0; [ "$code" = "303" ] && [ "$cancel_at" -lt 30 ] || rc=1
-  check "12" "E3 cancelado ${cancel_at}s após a compra de T5 (antes de 30 s; T5 ainda $st5)" "$rc" \
+  rc=0; [ "$code" = "303" ] && [ "$cancel_at" -lt 30 ] && [ "$st5" = "pending" ] || rc=1
+  check "12" "E3 cancelado ${cancel_at}s após a compra de T5 (antes de 30 s; T5 estava $st5)" "$rc" \
     "POST /organizer/events/$E3/cancel → HTTP $code"
 else
   fail "12" "Não foi possível criar/publicar E3 como organizador A" "E3='$E3'"
