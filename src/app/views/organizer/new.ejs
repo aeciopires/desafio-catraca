@@ -1,0 +1,7 @@
+<%- include('../partials/header') %>
+<p><a href="/organizer/events">&larr; Meus eventos</a></p>
+<h1>Novo evento</h1>
+<p class="muted">O evento nasce como rascunho; publique-o na página de gestão para abrir as vendas.</p>
+<%- include('_errors', { errors }) %>
+<%- include('_form', { form, action: '/organizer/events', testid: 'new-event-form', submitLabel: 'Criar evento' }) %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,5 @@
+<% if (errors && errors.length) { %>
+<ul class="error" data-testid="form-error">
+  <% errors.forEach(function (message) { %><li><%= message %></li><% }) %>
+</ul>
+<% } %>
