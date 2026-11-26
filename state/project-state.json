@@ -36,10 +36,10 @@
     "F04": {
       "name": "Vitrine e área do participante",
       "wave": 3,
-      "status": "todo",
-      "branch": "",
-      "pr": "",
-      "latestReport": ""
+      "status": "done",
+      "branch": "feat/F04-vitrine",
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/5",
+      "latestReport": "docs/features/F04-vitrine/reports/2026-11-25T234758-ea6d134.md"
     },
     "F05": {
       "name": "API de parceiros + OpenAPI",

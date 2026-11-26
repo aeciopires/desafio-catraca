@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<h1>Vitrine</h1>
+<% if (!events.length) { %>
+<p class="muted" data-testid="showcase-empty">Nenhum evento à venda no momento.</p>
+<% } else { %>
+<% events.forEach(function (event) { %>
+<article class="card" data-testid="showcase-event" data-event-id="<%= event.id %>">
+  <h2><a href="/events/<%= encodeURIComponent(event.id) %>" data-testid="showcase-event-name"><%= event.name %></a></h2>
+  <p>
+    <span data-testid="event-date"><%= formatDateTimeBR(new Date(event.starts_at)) %></span>
+    · <span data-testid="event-venue"><%= event.venue %></span>
+  </p>
+  <p>
+    <strong data-testid="event-price"><%= formatCents(event.price_cents) %></strong>
+    · <span data-testid="available-seats"><%= event.availableSeats %></span> vagas disponíveis
+  </p>
+  <p><a href="/events/<%= encodeURIComponent(event.id) %>">Ver evento</a></p>
+</article>
+<% }) %>
+<% } %>
+<%- include('../partials/footer') %>
