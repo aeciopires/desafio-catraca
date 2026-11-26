@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Evaluator flow (TASK.md, "Fluxo do avaliador") driven by curl against the RUNNING stack.
-# Reproduces the steps observable through HTTP; steps that depend on features of later waves
-# (dashboard) print SKIP until those features land.
+# Reproduces the steps observable through HTTP (steps 17-18 are manual and print SKIP).
 #   usage: [APP_PORT=8080] [PARTNER_API_KEY=...] [FAST=1] scripts/evaluator-flow.sh
 #   FAST=1: in step 8, poll until T2 is declined instead of waiting the full 45 s.
 # Bash 3.2 compatible (macOS): no associative arrays, no mapfile, no ${var,,}.
@@ -134,6 +133,42 @@ checkin() {
     "$WEB/organizer/events/$2/checkin" --data-urlencode "code=$3" || true)"
   BODY="$(cat "$WORK_DIR/page" 2>/dev/null || true)"
   CHECKIN="$(testid "$BODY" checkin-result)"
+}
+
+# dash JAR EVENT_ID: reads the dashboard of the management page into DASH as
+# "Confirmados/Pendentes/Check-ins/Vagas/Receita/Estornados" (e.g. "3/0/0/0/R$ 350,00/0").
+DASH=""
+dash() {
+  local id out=""
+  web_get "$1" "/organizer/events/$2"
+  for id in confirmed pending checkins available revenue refunded; do
+    out="$out/$(testid "$BODY" "dash-$id")"
+  done
+  DASH="${out#/}"
+}
+
+# wait_dash JAR EVENT_ID EXPECTED SECONDS: polls the dashboard until DASH = EXPECTED (or timeout).
+wait_dash() {
+  local start=$SECONDS
+  dash "$1" "$2"
+  while [ "$DASH" != "$3" ] && [ $((SECONDS - start)) -lt "$4" ]; do
+    sleep 0.5
+    dash "$1" "$2"
+  done
+  [ "$DASH" = "$3" ]
+}
+
+# edit_event JAR EVENT_ID NAME CAPACITY PRICE → HTTP status of the edit POST (keeps the start date
+# and venue read from the edit form of the management page).
+edit_event() {
+  local starts venue
+  web_get "$1" "/organizer/events/$2"
+  starts="$(printf '%s' "$BODY" | tr '\n' ' ' | sed -n 's#.*name="startsAt"[^>]*value="\([^"]*\)".*#\1#p')"
+  venue="$(printf '%s' "$BODY" | tr '\n' ' ' | sed -n 's#.*name="venue"[^>]*value="\([^"]*\)".*#\1#p')"
+  curl -s -o /dev/null -w '%{http_code}' -c "$1" -b "$1" -X POST "$WEB/organizer/events/$2" \
+    --data-urlencode "name=$3" --data-urlencode "startsAt=$starts" \
+    --data-urlencode "venue=$venue" --data-urlencode "capacity=$4" \
+    --data-urlencode "price=$5" || true
 }
 
 # shows_event_data HTML: true when the page exposes E1 data (its name or the code C1).
@@ -273,8 +308,30 @@ fi
 rc=0; [ "$st" = "confirmed" ] || rc=1
 check "08" "T3 ($T3, …0001) confirmado em $((SECONDS - t3_at))s" "$rc" "status=$st"
 
-# --- Step 9 -------------------------------------------------------------------------------------
-skip "09" "edição de lotação/preço e painel de E1 (TODO: F08 — painel)"
+# --- Step 9: capacity/price edit, T4 at the new price, dashboard of E1 -------------------------
+code="$(edit_event "$JAR_A" "$E1" "$E1_NAME" 1 "100,00")"
+rc=0; [ "$code" = "422" ] || rc=1
+check "09" "reduzir a lotação de E1 para 1 é rejeitado (HTTP $code)" "$rc" "esperado: 422"
+code="$(edit_event "$JAR_A" "$E1" "$E1_NAME" 3 "150,00")"
+rc=0; [ "$code" = "303" ] || rc=1
+check "09" "preço R\$ 150,00 e lotação 3 em E1 são aceitos (HTTP $code)" "$rc" "esperado: 303"
+api POST "/api/partner/events/$E1/purchases" "$(purchase_json "t4-$RUN_ID@example.com" 4000000000000001)"
+T4="$(jget "$BODY" "d.ticketId")"
+t4_at=$SECONDS
+st=""
+if [ "$STATUS" = "202" ]; then
+  while [ $((SECONDS - t4_at)) -le 6 ]; do
+    st="$(ticket_status "$T4")"
+    [ "$st" = "confirmed" ] && break
+    sleep 0.5
+  done
+fi
+rc=0; [ "$st" = "confirmed" ] || rc=1
+check "09" "T4 ($T4, …0001) confirmado em $((SECONDS - t4_at))s" "$rc" "status=$st"
+expected="3/0/0/0/R\$ 350,00/0"
+rc=0; wait_dash "$JAR_A" "$E1" "$expected" 5 || rc=1
+check "09" "painel de E1 (Confirmados/Pendentes/Check-ins/Vagas/Receita/Estornados) = $DASH" "$rc" \
+  "esperado: $expected"
 
 # --- Step 10: check-in on E1 as organizer A ----------------------------------------------------
 E1_URL="/organizer/events/$E1"
@@ -288,7 +345,10 @@ for pair in "$C1|Entrada liberada|C1" "$C1|Ingresso já utilizado|C1 de novo" \
   rc=0; [ "$STATUS" = "200" ] && [ "$CHECKIN" = "$expected" ] || rc=1
   check "10" "check-in de $label ($code_in) em E1 → '$expected'" "$rc" "HTTP $STATUS; checkin-result='$CHECKIN'"
 done
-skip "10" "painel de E1 mostra Check-ins 1 (TODO: F08 — painel)"
+dash "$JAR_A" "$E1"
+expected="3/0/1/0/R\$ 350,00/0"
+rc=0; [ "$DASH" = "$expected" ] || rc=1
+check "10" "painel de E1 mostra Check-ins 1 ($DASH)" "$rc" "esperado: $expected"
 web_get "$JAR_A" "$E1_URL"
 rc=0; [ "$STATUS" = "200" ] && printf '%s' "$BODY" | grep -Fq "$E1_NAME" || rc=1
 check "10" "endereço da página de gestão de E1 copiado: $E1_URL" "$rc" "GET $E1_URL → HTTP $STATUS"
@@ -423,7 +483,12 @@ if [ -n "$T5" ]; then
     skip "14" "check-in de C6 em E3 → 'Evento cancelado' (TODO: F06 — check-in)"
   fi
 fi
-skip "14" "painel de E3 com Estornados 1 e o resto zerado (TODO: F08 — painel)"
+if [ -n "$E3" ]; then
+  dash "$JAR_A" "$E3"
+  expected="0/0/0/0/R\$ 0,00/1"
+  rc=0; [ "$DASH" = "$expected" ] || rc=1
+  check "14" "painel de E3 com Estornados 1 e o resto zerado ($DASH)" "$rc" "esperado: $expected"
+fi
 
 # --- Step 15: 30 concurrent purchases, twice ---------------------------------------------------
 burst() {
@@ -440,11 +505,14 @@ for name in E4 E5; do
   ev="$(create_event "$JAR_A" "$name Fluxo $RUN_ID" 5 "10,00")"
   if [ -n "$ev" ] && publish_event "$JAR_A" "$ev"; then
     burst "$ev" "$name"
+    b15_at=$SECONDS
+    rc=0; wait_dash "$JAR_A" "$ev" "5/0/0/0/R\$ 50,00/0" 10 || rc=1
+    check "15" "em $((SECONDS - b15_at))s o painel de $name mostra Confirmados 5 e Vagas 0 ($DASH)" \
+      "$rc" "esperado em até 10 s: 5/0/0/0/R\$ 50,00/0"
   else
     fail "15" "Não foi possível criar/publicar $name" "id='$ev'"
   fi
 done
-skip "15" "painel de E4/E5 com Confirmados 5 e Vagas 0 (TODO: F08 — painel)"
 
 # --- Step 16: auth and errors ------------------------------------------------------------------
 ok16=0
