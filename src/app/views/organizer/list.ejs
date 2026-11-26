@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<h1>Meus eventos</h1>
+<p><a class="btn" href="/organizer/events/new" data-testid="new-event-link">Novo evento</a></p>
+<% if (!events.length) { %>
+<p class="muted" data-testid="org-events-empty">Você ainda não criou eventos.</p>
+<% } else { %>
+<table>
+  <thead><tr><th>Evento</th><th>Início</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  <% events.forEach(function (event) { %>
+    <tr data-testid="org-event-row" data-event-id="<%= event.id %>">
+      <td><%= event.name %></td>
+      <td><%= formatDateTimeBR(new Date(event.starts_at)) %></td>
+      <td><%= statusLabels[event.status] %></td>
+      <td><a href="/organizer/events/<%= encodeURIComponent(event.id) %>">Gerenciar</a></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+<% } %>
+<%- include('../partials/footer') %>

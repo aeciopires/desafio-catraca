@@ -1,0 +1,31 @@
+<%- include('../partials/header') %>
+<p><a href="/organizer/events">&larr; Meus eventos</a></p>
+<h1 data-testid="event-name"><%= event.name %></h1>
+<p>Status: <strong data-testid="event-status"><%= statusLabel %></strong></p>
+<% if (flash) { %><p class="flash" data-testid="flash"><%= flash %></p><% } %>
+<%- include('_errors', { errors }) %>
+
+<section class="card" data-testid="event-details">
+  <p>Início: <span data-testid="event-starts-at"><%= formatDateTimeBR(new Date(event.starts_at)) %></span></p>
+  <p>Local: <span data-testid="event-venue"><%= event.venue %></span></p>
+  <p>Lotação: <span data-testid="event-capacity"><%= event.capacity %></span></p>
+  <p>Preço: <span data-testid="event-price"><%= formatCents(event.price_cents) %></span></p>
+</section>
+
+<% if (event.status === 'draft') { %>
+<form method="post" action="/organizer/events/<%= encodeURIComponent(event.id) %>/publish" data-testid="publish-form">
+  <button class="btn" type="submit" data-testid="publish-button">Publicar evento</button>
+</form>
+<% } %>
+
+<% if (event.status !== 'cancelled') { %>
+<h2>Editar evento</h2>
+<%- include('_form', { form, action: '/organizer/events/' + encodeURIComponent(event.id), testid: 'edit-form', submitLabel: 'Salvar alterações' }) %>
+<% } %>
+
+<% sections.forEach(function (section) { %>
+<section data-section="<%= section.id %>">
+  <%- include('../' + section.view, Object.assign({}, section.data, { event: event })) %>
+</section>
+<% }) %>
+<%- include('../partials/footer') %>

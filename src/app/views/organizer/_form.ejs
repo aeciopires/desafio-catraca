@@ -1,0 +1,14 @@
+<%# Shared create/edit event form. Expects: form (values), action, testid, submitLabel. %>
+<form method="post" action="<%= action %>" class="card" data-testid="<%= testid %>">
+  <label for="name">Nome do evento</label>
+  <input id="name" name="name" required value="<%= form.name %>">
+  <label for="startsAt">Data e hora de início</label>
+  <input id="startsAt" name="startsAt" type="datetime-local" required value="<%= form.startsAt %>">
+  <label for="venue">Local</label>
+  <input id="venue" name="venue" required value="<%= form.venue %>">
+  <label for="capacity">Lotação</label>
+  <input id="capacity" name="capacity" type="number" min="1" step="1" required value="<%= form.capacity %>">
+  <label for="price">Preço do ingresso (R$)</label>
+  <input id="price" name="price" inputmode="decimal" placeholder="150,00" required value="<%= form.price %>">
+  <p><button class="btn" type="submit"><%= submitLabel %></button></p>
+</form>
