@@ -26,6 +26,7 @@
 - [Configuração: variáveis e portas](operations/configuracao.md)
 - [Troubleshooting: códigos de erro](operations/troubleshooting.md)
 - [Imagens Docker e compatibilidade](operations/imagens.md)
+- [Observabilidade: métricas, traces e logs](operations/observabilidade.md)
 
 ## Requisitos por sistema
 
