@@ -1,0 +1,10 @@
+<%# Section "dashboard" (F08, R12). Receives: event, dashboard { confirmed, pending, checkins, available, revenueCents, refunded }. Each data-testid="dash-*" element holds ONLY its value. %>
+<h2>Painel do evento</h2>
+<dl class="card" data-testid="dashboard">
+  <dt>Confirmados</dt><dd data-testid="dash-confirmed"><%= dashboard.confirmed %></dd>
+  <dt>Pendentes</dt><dd data-testid="dash-pending"><%= dashboard.pending %></dd>
+  <dt>Check-ins</dt><dd data-testid="dash-checkins"><%= dashboard.checkins %></dd>
+  <dt>Vagas disponíveis</dt><dd data-testid="dash-available"><%= dashboard.available %></dd>
+  <dt>Receita</dt><dd data-testid="dash-revenue"><%= formatCents(dashboard.revenueCents) %></dd>
+  <dt>Estornados</dt><dd data-testid="dash-refunded"><%= dashboard.refunded %></dd>
+</dl>
