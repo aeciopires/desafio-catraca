@@ -68,8 +68,8 @@
     "F08": {
       "name": "Painel do evento",
       "wave": 5,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F08-painel",
       "pr": "",
       "latestReport": ""
     },
