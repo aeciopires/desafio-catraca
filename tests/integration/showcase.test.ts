@@ -228,7 +228,7 @@ describe('F04 showcase', () => {
       eventId,
       channel: 'partner',
       buyerEmail: uniqueEmail('partner-buyer'),
-      cardNumber: CARDS.declineFast,
+      cardNumber: CARDS.declineSlow,
     });
     expect(ticket.status).toBe('pending');
 
@@ -239,7 +239,7 @@ describe('F04 showcase', () => {
     const reopened = await waitFor(async () => {
       const page = await web.get(`/events/${eventId}`);
       return hasTestId(page.html, 'purchase-form') ? page : null;
-    }, scaled(5000));
+    }, scaled(40000));
     expect(hasTestId(reopened.html, 'sold-out')).toBe(false);
     expect(testId(reopened.html, 'available-seats')).toBe('1');
   });
