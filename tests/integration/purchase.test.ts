@@ -93,9 +93,9 @@ describe('F03 purchase core', () => {
   it('C-F03-03: gateway table applied end to end by the worker', async () => {
     const eventId = await insertEvent({ capacity: 10 });
     const expected = [
-      { card: CARDS.approveFast, final: 'confirmed', min: 2000, max: 4500 },
-      { card: CARDS.declineFast, final: 'declined', min: 2000, max: 4500 },
-      { card: CARDS.other, final: 'declined', min: 2000, max: 4500 },
+      { card: CARDS.approveFast, final: 'confirmed', min: 2000, max: 4000 },
+      { card: CARDS.declineFast, final: 'declined', min: 2000, max: 4000 },
+      { card: CARDS.other, final: 'declined', min: 2000, max: 4000 },
       { card: CARDS.approveSlow, final: 'confirmed', min: 30000, max: 39000 },
       { card: CARDS.declineSlow, final: 'declined', min: 30000, max: 39000 },
     ] as const;

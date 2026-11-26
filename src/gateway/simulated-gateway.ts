@@ -10,14 +10,14 @@ export interface SimulatedRule {
 
 /** Table from the brief (delays inside the brief's ranges, with slack for the worker polling). */
 export const SIMULATED_RULES: Readonly<Record<string, SimulatedRule>> = {
-  '0001': { decision: 'approved', minMs: 2000, maxMs: 4500 },
-  '0002': { decision: 'declined', minMs: 2000, maxMs: 4500 },
+  '0001': { decision: 'approved', minMs: 2000, maxMs: 4000 },
+  '0002': { decision: 'declined', minMs: 2000, maxMs: 4000 },
   '0003': { decision: 'approved', minMs: 30000, maxMs: 39000 },
   '0004': { decision: 'declined', minMs: 30000, maxMs: 39000 },
 };
 
 /** Any other card ending: declined quickly. */
-export const DEFAULT_RULE: SimulatedRule = { decision: 'declined', minMs: 2000, maxMs: 4500 };
+export const DEFAULT_RULE: SimulatedRule = { decision: 'declined', minMs: 2000, maxMs: 4000 };
 
 export function ruleForCard(cardNumber: string): SimulatedRule {
   return SIMULATED_RULES[cardNumber.slice(-4)] ?? DEFAULT_RULE;

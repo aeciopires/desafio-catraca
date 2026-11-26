@@ -1,6 +1,6 @@
 {
   "project": "catraca",
-  "updatedAt": "2026-11-26T01:00:00-03:00",
+  "updatedAt": "2026-11-26T01:25:00-03:00",
   "statusValues": [
     "todo",
     "in_progress",
@@ -31,7 +31,7 @@
       "status": "done",
       "branch": "feat/F03-compra-pagamento",
       "pr": "https://github.com/aeciopires/desafio-catraca/pull/4",
-      "latestReport": "docs/features/F03-compra-pagamento/reports/2026-11-25T233604-9752556.md"
+      "latestReport": "docs/features/F03-compra-pagamento/reports/2026-11-26T011454-631ea30.md"
     },
     "F04": {
       "name": "Vitrine e área do participante",
