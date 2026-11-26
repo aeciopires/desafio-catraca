@@ -1,6 +1,6 @@
 {
   "project": "catraca",
-  "updatedAt": "2026-11-25T23:50:00-03:00",
+  "updatedAt": "2026-11-26T00:05:00-03:00",
   "statusValues": [
     "todo",
     "in_progress",
@@ -44,10 +44,10 @@
     "F05": {
       "name": "API de parceiros + OpenAPI",
       "wave": 3,
-      "status": "in_review",
+      "status": "done",
       "branch": "feat/F05-api-parceiros",
-      "pr": "",
-      "latestReport": ""
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/6",
+      "latestReport": "docs/features/F05-api-parceiros/reports/2026-11-25T235430-117b914.md"
     },
     "F06": {
       "name": "Check-in",
