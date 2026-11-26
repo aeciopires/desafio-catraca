@@ -276,10 +276,94 @@ else
 fi
 skip "11" "isolamento entre organizadores e check-in de C3 em E1 (TODO: F06)"
 
-# --- Steps 12-14 --------------------------------------------------------------------------------
-skip "12" "cancelamento de E3 (TODO: F07 — cancelamento)"
-skip "13" "E3 cancelado: 404 event_not_available, T6 refunded, T5 cancelled (TODO: F07)"
-skip "14" "T5 continua cancelled e painel de E3 (TODO: F07/F08)"
+# --- Step 12: E3 with a pending (T5, …0003) and a confirmed (T6, …0001) ticket, then cancel ------
+T5=""
+T6=""
+C6=""
+T5_AT=$SECONDS
+E3="$(create_event "$JAR_A" "E3 Fluxo $RUN_ID" 5 "50,00")"
+if [ -n "$E3" ] && publish_event "$JAR_A" "$E3"; then
+  T5_AT=$SECONDS
+  api POST "/api/partner/events/$E3/purchases" "$(purchase_json "t5-$RUN_ID@example.com" 4000000000000003)"
+  T5="$(jget "$BODY" "d.ticketId")"
+  t5_http="$STATUS"
+  api POST "/api/partner/events/$E3/purchases" "$(purchase_json "t6-$RUN_ID@example.com" 4000000000000001)"
+  T6="$(jget "$BODY" "d.ticketId")"
+  C6="$(jget "$BODY" "d.code")"
+  rc=0; [ "$t5_http" = "202" ] && [ "$STATUS" = "202" ] || rc=1
+  check "12" "E3 ($E3) comprado pela API: T5 (…0003) $T5 e T6 (…0001) $T6 (C6=$C6)" "$rc" \
+    "T5 HTTP $t5_http; T6 HTTP $STATUS $BODY"
+  st=""
+  while [ $((SECONDS - T5_AT)) -le 20 ]; do
+    st="$(ticket_status "$T6")"
+    [ "$st" = "confirmed" ] && break
+    sleep 0.5
+  done
+  rc=0; [ "$st" = "confirmed" ] || rc=1
+  check "12" "T6 confirmado antes do cancelamento" "$rc" "status=$st"
+  code="$(curl -s -o /dev/null -w '%{http_code}' -c "$JAR_A" -b "$JAR_A" -X POST \
+    "$WEB/organizer/events/$E3/cancel")"
+  cancel_at=$((SECONDS - T5_AT))
+  st5="$(ticket_status "$T5")"
+  rc=0; [ "$code" = "303" ] && [ "$cancel_at" -lt 30 ] || rc=1
+  check "12" "E3 cancelado ${cancel_at}s após a compra de T5 (antes de 30 s; T5 ainda $st5)" "$rc" \
+    "POST /organizer/events/$E3/cancel → HTTP $code"
+else
+  fail "12" "Não foi possível criar/publicar E3 como organizador A" "E3='$E3'"
+fi
+
+# --- Step 13: E3 is gone, refuses purchases, tickets move within 10 s, page is read-only -------
+if [ -n "$E3" ]; then
+  web_get "$WORK_DIR/visitor.jar" /
+  rc=0; [ "$STATUS" = "200" ] && ! printf '%s' "$BODY" | grep -q "data-event-id=\"$E3\"" || rc=1
+  check "13" "E3 cancelado não aparece na vitrine" "$rc" "GET / → HTTP $STATUS"
+  api GET /api/partner/events
+  listed="$(jget "$BODY" "d.some((e) => e.id === '$E3') ? 'yes' : 'no'")"
+  rc=0; [ "$STATUS" = "200" ] && [ "$listed" = "no" ] || rc=1
+  check "13" "E3 cancelado não aparece na listagem da API" "$rc" "HTTP $STATUS; listado=$listed"
+  api POST "/api/partner/events/$E3/purchases" "$(purchase_json "t7-$RUN_ID@example.com" 4000000000000001)"
+  rc=0; [ "$STATUS" = "404" ] && [ "$BODY" = '{"error":"event_not_available"}' ] || rc=1
+  check "13" "compra de E3 pela API → 404 event_not_available" "$rc" "HTTP $STATUS $BODY"
+  c13_at=$SECONDS
+  st5=""
+  st6=""
+  while [ $((SECONDS - c13_at)) -le 10 ]; do
+    st5="$(ticket_status "$T5")"
+    st6="$(ticket_status "$T6")"
+    [ "$st5" = "cancelled" ] && [ "$st6" = "refunded" ] && break
+    sleep 0.5
+  done
+  rc=0; [ "$st5" = "cancelled" ] && [ "$st6" = "refunded" ] || rc=1
+  check "13" "em até 10 s: T6 refunded e T5 cancelled" "$rc" "T6=$st6 T5=$st5"
+  web_get "$JAR_A" "/organizer/events/$E3"
+  rc=0
+  [ "$STATUS" = "200" ] && [ "$(testid "$BODY" event-status)" = "Cancelado" ] || rc=1
+  if printf '%s' "$BODY" | grep -Eq 'data-testid="(edit-form|publish-button|cancel-button)"'; then rc=1; fi
+  check "13" "página de gestão de E3: Cancelado, sem edit-form, sem publicar e sem cancel-button" "$rc" \
+    "GET /organizer/events/$E3 → HTTP $STATUS"
+  MANAGE_E3="$BODY"
+fi
+
+# --- Step 14: 45 s after T5's purchase it is still cancelled ------------------------------------
+if [ -n "$T5" ]; then
+  info "Aguardando 45 s desde a compra de T5 (resposta tardia do gateway)"
+  while [ $((SECONDS - T5_AT)) -lt 45 ]; do sleep 1; done
+  st5="$(ticket_status "$T5")"
+  st6="$(ticket_status "$T6")"
+  rc=0; [ "$st5" = "cancelled" ] && [ "$st6" = "refunded" ] || rc=1
+  check "14" "após $((SECONDS - T5_AT))s da compra, T5 continua cancelled (T6 $st6)" "$rc" \
+    "T5=$st5 T6=$st6"
+  if printf '%s' "${MANAGE_E3:-}" | grep -q 'data-testid="checkin-form"'; then
+    curl -s -o "$WORK_DIR/page" -c "$JAR_A" -b "$JAR_A" -X POST \
+      "$WEB/organizer/events/$E3/checkin" --data-urlencode "code=$C6" >/dev/null || true
+    result="$(testid "$(cat "$WORK_DIR/page")" checkin-result)"
+    rc=0; [ "$result" = "Evento cancelado" ] || rc=1
+    check "14" "check-in de C6 em E3 → '$result'" "$rc" "esperado: Evento cancelado"
+  else
+    skip "14" "check-in de C6 em E3 → 'Evento cancelado' (TODO: F06 — check-in)"
+  fi
+fi
+skip "14" "painel de E3 com Estornados 1 e o resto zerado (TODO: F08 — painel)"
 
 # --- Step 15: 30 concurrent purchases, twice ---------------------------------------------------
 burst() {
