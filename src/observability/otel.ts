@@ -8,6 +8,11 @@
 const disabled = (process.env.OTEL_SDK_DISABLED ?? 'true').trim().toLowerCase() === 'true';
 
 if (!disabled) {
+  // The app is ESM: instrumentations can only patch ESM-imported packages through an
+  // import-in-the-middle loader hook (synchronous, in-thread). Limited to what we instrument.
+  const { register } = await import('import-in-the-middle/register-hooks.mjs');
+  register({ include: ['pino', 'pg', 'fastify', 'node:http', 'http', 'node:https', 'https'] });
+
   const { NodeSDK } = await import('@opentelemetry/sdk-node');
   const { getNodeAutoInstrumentations } = await import('@opentelemetry/auto-instrumentations-node');
   const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');
@@ -24,6 +29,9 @@ if (!disabled) {
         '@opentelemetry/instrumentation-fs': { enabled: false },
         '@opentelemetry/instrumentation-dns': { enabled: false },
         '@opentelemetry/instrumentation-net': { enabled: false },
+        // Only DB queries inside a request become spans: the worker polls the database every
+        // WORKER_POLL_MS and would otherwise flood Jaeger with one-span traces.
+        '@opentelemetry/instrumentation-pg': { requireParentSpan: true },
         '@opentelemetry/instrumentation-http': {
           // Health probes and Prometheus scrapes are not interesting traces.
           ignoreIncomingRequestHook: (req) => {
