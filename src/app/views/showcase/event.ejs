@@ -1,0 +1,29 @@
+<%- include('../partials/header') %>
+<p><a href="/">← Vitrine</a></p>
+<section class="card" data-testid="event-details" data-event-id="<%= event.id %>">
+  <h1 data-testid="event-name"><%= event.name %></h1>
+  <p>
+    <span data-testid="event-date"><%= formatDateTimeBR(new Date(event.starts_at)) %></span>
+    · <span data-testid="event-venue"><%= event.venue %></span>
+  </p>
+  <p>
+    <strong data-testid="event-price"><%= formatCents(event.price_cents) %></strong>
+    · <span data-testid="available-seats"><%= soldOut ? 0 : event.availableSeats %></span> vagas disponíveis
+  </p>
+</section>
+<% if (soldOut) { %>
+<p class="error" data-testid="sold-out">Ingressos esgotados</p>
+<% } else if (viewer === 'participant') { %>
+<% if (error) { %><p class="error" data-testid="form-error"><%= error %></p><% } %>
+<form method="post" action="/events/<%= encodeURIComponent(event.id) %>/purchase" class="card" data-testid="purchase-form">
+  <label for="cardNumber">Número do cartão</label>
+  <input id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="16" required>
+  <p class="muted">Informe os 16 dígitos do cartão, sem espaços.</p>
+  <p><button class="btn" type="submit">Comprar ingresso</button></p>
+</form>
+<% } else if (viewer === 'organizer') { %>
+<p class="muted" data-testid="organizer-notice">Apenas participantes compram ingressos</p>
+<% } else { %>
+<p><a class="btn" data-testid="login-to-buy" href="/login?next=<%= encodeURIComponent('/events/' + event.id) %>">Entre para comprar</a></p>
+<% } %>
+<%- include('../partials/footer') %>
