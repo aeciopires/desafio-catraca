@@ -1,6 +1,6 @@
 {
   "project": "catraca",
-  "updatedAt": "2026-11-26T00:05:00-03:00",
+  "updatedAt": "2026-11-26T00:35:00-03:00",
   "statusValues": [
     "todo",
     "in_progress",
@@ -60,10 +60,10 @@
     "F07": {
       "name": "Cancelamento de evento",
       "wave": 4,
-      "status": "todo",
-      "branch": "",
-      "pr": "",
-      "latestReport": ""
+      "status": "done",
+      "branch": "feat/F07-cancelamento",
+      "pr": "https://github.com/aeciopires/desafio-catraca/pull/9",
+      "latestReport": "docs/features/F07-cancelamento/reports/2026-11-26T002741-f92b9a2.md"
     },
     "F08": {
       "name": "Painel do evento",

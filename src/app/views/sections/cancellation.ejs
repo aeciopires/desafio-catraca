@@ -1,0 +1,15 @@
+<%# Section "cancellation" (F07). Receives: event, cancelledAt, and the page extras (ok, errors...). %>
+<% if (typeof ok !== 'undefined' && ok === 'cancelled' && event.status === 'cancelled') { %>
+<p class="flash" data-testid="flash">Evento cancelado.</p>
+<% } %>
+<% if (event.status === 'published') { %>
+<h2>Cancelar evento</h2>
+<p>O cancelamento é irreversível: o evento sai da vitrine e da API, para de vender, ingressos confirmados são estornados e os pendentes, cancelados.</p>
+<form method="post" action="/organizer/events/<%= encodeURIComponent(event.id) %>/cancel" data-testid="cancel-form" onsubmit="return confirm('Cancelar este evento? Esta ação é irreversível.');">
+  <button class="btn" type="submit" data-testid="cancel-button">Cancelar evento</button>
+</form>
+<% } else if (event.status === 'cancelled') { %>
+<p class="card" data-testid="event-cancelled">Evento cancelado em <%= cancelledAt ? formatDateTimeBR(new Date(cancelledAt)) : '-' %>. Esta ação é irreversível.</p>
+<% } else { %>
+<p data-testid="cancel-unavailable">Só eventos publicados podem ser cancelados.</p>
+<% } %>
