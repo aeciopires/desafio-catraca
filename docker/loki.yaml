@@ -34,6 +34,9 @@ limits_config:
 
 ingester:
   chunk_idle_period: 1m
+  lifecycler:
+    # Local single instance: no ring peers to wait for, so /ready answers right away.
+    min_ready_duration: 0s
 
 analytics:
   reporting_enabled: false
