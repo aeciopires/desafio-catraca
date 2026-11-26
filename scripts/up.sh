@@ -60,7 +60,7 @@ cat <<EOF
   Participante:   participante@catraca.local / catraca123
   Chave parceiro: ${PARTNER_API_KEY:-catraca-partner-key-dev}   (header X-Api-Key)
 EOF
-if [ "$OBSERVABILITY" = "1" ]; then
+if [ "$OBSERVABILITY" = "1" ] && compose --profile observability config --services 2>/dev/null | grep -q grafana; then
   cat <<EOF
   Grafana:        http://localhost:$GRAFANA_PORT   (admin / admin)
   Prometheus:     http://localhost:$PROMETHEUS_PORT

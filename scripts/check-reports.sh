@@ -16,12 +16,12 @@ STATE="state/project-state.json"
 failed=0
 fields=("Data:" "Commit avaliado:" "Ferramenta:" "Modelo:" "Veredito geral:")
 
-json() { node -e "const s=require('./$STATE');$1" 2>/dev/null; }
+json() { node_run -e "const s=require('./$STATE');$1" 2>/dev/null; }
 
 if [ ! -f "$STATE" ]; then
   die "STATE-001" "$STATE não encontrado" "O arquivo de estado do projeto foi apagado ou movido." "Restaure o arquivo (git checkout -- $STATE)."
 fi
-if ! node -e "require('./$STATE')" 2>/dev/null; then
+if ! node_run -e "require('./$STATE')" 2>/dev/null; then
   die "STATE-002" "$STATE não é um JSON válido" "Edição manual quebrou o JSON." "Valide com: jq . $STATE"
 fi
 

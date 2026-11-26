@@ -82,13 +82,13 @@ gates: ## All gates: spec, reports, TOC, lint, typecheck, unit, integration
 	@bash scripts/gates.sh
 
 toc: ## Generate/update the TOC of every Markdown file (idempotent)
-	@node scripts/gen-toc.mjs
+	@bash -c 'source scripts/lib.sh && node_run scripts/gen-toc.mjs'
 
 toc-check: ## Fail if any TOC is outdated
-	@node scripts/gen-toc.mjs --check
+	@bash -c 'source scripts/lib.sh && node_run scripts/gen-toc.mjs --check'
 
 check-spec: ## Validate PRD x graph x contracts consistency
-	@node scripts/check-spec.mjs
+	@bash -c 'source scripts/lib.sh && node_run scripts/check-spec.mjs'
 
 check-reports: ## Validate immutable reports and the project state file
 	@bash scripts/check-reports.sh

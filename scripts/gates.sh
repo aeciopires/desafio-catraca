@@ -17,14 +17,13 @@ step() {
   fi
 }
 
-if ! command -v node >/dev/null 2>&1; then
-  die "GATE-002" "Node.js não encontrado no host" "Os checadores de spec/TOC usam Node.js (LTS)." \
-    "Instale o Node.js LTS (https://nodejs.org) ou rode make install (mise)."
+if ! node -e '' >/dev/null 2>&1; then
+  warn "Node.js do host indisponível (ausente ou mise sem 'mise trust'); usando a imagem $NODE_IMAGE."
 fi
 
-step "check-spec" node scripts/check-spec.mjs
+step "check-spec" node_run scripts/check-spec.mjs
 step "check-reports" bash scripts/check-reports.sh
-step "toc-check" node scripts/gen-toc.mjs --check
+step "toc-check" node_run scripts/gen-toc.mjs --check
 step "lint + typecheck + unit + integration" bash scripts/run-tests.sh all
 
 if [ "$failed" -ne 0 ]; then
