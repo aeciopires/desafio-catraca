@@ -61,8 +61,16 @@ interface PurchaseBody {
   cardNumber: string;
 }
 
+function isJson(request: FastifyRequest): boolean {
+  const type = (request.headers['content-type'] ?? '').split(';')[0]!.trim().toLowerCase();
+  return type === 'application/json' || type.endsWith('+json');
+}
+
 /** Manual body validation (contract order: body first, then event, then seats). */
-function parsePurchaseBody(body: unknown): PurchaseBody | null {
+function parsePurchaseBody(request: FastifyRequest): PurchaseBody | null {
+  // The contract body is JSON; other parsed content types (e.g. forms) are invalid requests.
+  if (!isJson(request)) return null;
+  const body: unknown = request.body;
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return null;
   const { buyerEmail, cardNumber } = body as Record<string, unknown>;
   if (typeof buyerEmail !== 'string' || !EMAIL_RE.test(buyerEmail)) return null;
@@ -105,7 +113,7 @@ export default async function partnerRoutes(app: FastifyInstance): Promise<void>
     '/events/:eventId/purchases',
     { schema: partnerSchemas.purchase },
     async (request, reply) => {
-      const body = parsePurchaseBody(request.body);
+      const body = parsePurchaseBody(request);
       if (!body) return sendError(reply, 422, 'invalid_request');
       try {
         const ticket = await purchaseTicket({
