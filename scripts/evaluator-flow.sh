@@ -113,6 +113,18 @@ publish_event() {
   [ "$code" = "303" ]
 }
 
+# web_get JAR PATH → STATUS/BODY of a web page (cookie jar).
+web_get() {
+  STATUS="$(curl -s -o "$WORK_DIR/page" -w '%{http_code}' -c "$1" -b "$1" "$WEB$2" || true)"
+  BODY="$(cat "$WORK_DIR/page" 2>/dev/null || true)"
+}
+
+# testid HTML ID → text of the first element with data-testid="ID" (tags stripped).
+testid() {
+  printf '%s' "$1" | tr '\n' ' ' | sed -n "s#.*data-testid=\"$2\"[^>]*>\([^<]*\)<.*#\1#p" | head -n1 |
+    sed 's/^ *//; s/ *$//'
+}
+
 purchase_json() {
   printf '{"buyerEmail":"%s","cardNumber":"%s"}' "$1" "$2"
 }
@@ -145,7 +157,9 @@ api GET /api/partner/events
 listed="$(jget "$BODY" "d.some((e) => e.id === '$E1') ? 'yes' : 'no'")"
 rc=0; [ "$STATUS" = "200" ] && [ "$listed" = "no" ] || rc=1
 check "02" "E1 em rascunho ($E1) não aparece na listagem da API" "$rc" "HTTP $STATUS; listado=$listed"
-skip "02" "vitrine deslogada não mostra E1 (TODO: F04 — vitrine)"
+web_get "$WORK_DIR/visitor.jar" /
+rc=0; [ "$STATUS" = "200" ] && ! printf '%s' "$BODY" | grep -q "data-event-id=\"$E1\"" || rc=1
+check "02" "vitrine deslogada não mostra E1" "$rc" "GET / → HTTP $STATUS"
 
 # --- Step 3 -------------------------------------------------------------------------------------
 skip "03" "criação com data de ontem é rejeitada (coberto pelos testes da F02; fora do escopo da API)"
@@ -159,18 +173,34 @@ starts="$(jget "$BODY" "(d.find((e) => e.id === '$E1') || {}).startsAt")"
 rc=0; [ "$seats" = "2" ] && [ "$price" = "10000" ] && printf '%s' "$starts" | grep -Eq -- '-03:00$' || rc=1
 check "04" "E1 publicado aparece na API com availableSeats 2, priceCents 10000 e startsAt $starts" "$rc" \
   "availableSeats=$seats priceCents=$price startsAt=$starts"
-skip "04" "E1 aparece na vitrine (TODO: F04 — vitrine)"
+web_get "$WORK_DIR/visitor.jar" /
+rc=0; printf '%s' "$BODY" | grep -q "data-event-id=\"$E1\"" || rc=1
+check "04" "E1 publicado aparece na vitrine" "$rc" "GET / sem data-event-id=$E1"
 
-# --- Step 5 -------------------------------------------------------------------------------------
-# TODO(F04): buy through the showcase as a new participant. Until then the seat is taken through
-# the API with the same card so that steps 6-8 see the same occupancy as in the brief.
-api POST "/api/partner/events/$E1/purchases" "$(purchase_json "c1-$RUN_ID@example.com" 4000000000000001)"
-C1_TICKET="$(jget "$BODY" "d.ticketId")"
-if [ "$STATUS" = "202" ] && [ -n "$C1_TICKET" ]; then
-  skip "05" "compra na vitrine (TODO: F04); vaga ocupada pela API com o cartão …0001 ($C1_TICKET)"
-else
-  fail "05" "Compra substituta (API, cartão …0001) de E1 falhou" "HTTP $STATUS $BODY"
-fi
+# --- Step 5: new participant buys E1 on the showcase -------------------------------------------
+JAR_P="$WORK_DIR/participant.jar"
+P_EMAIL="participante-$RUN_ID@example.com"
+code="$(curl -s -o /dev/null -w '%{http_code}' -c "$JAR_P" -b "$JAR_P" -X POST "$WEB/signup" \
+  --data-urlencode "name=Participante Fluxo" --data-urlencode "email=$P_EMAIL" \
+  --data-urlencode "password=segredo123")"
+[ "$code" = "303" ] || fail "05" "Cadastro de participante falhou" "POST /signup → HTTP $code"
+code="$(curl -s -o /dev/null -w '%{http_code}' -c "$JAR_P" -b "$JAR_P" -X POST \
+  "$WEB/events/$E1/purchase" --data-urlencode "cardNumber=4000000000000001")"
+p5_at=$SECONDS
+web_get "$JAR_P" /me/tickets
+first="$(testid "$BODY" ticket-status)"
+C1="$(testid "$BODY" ticket-code)"
+rc=0; [ "$code" = "303" ] && [ "$first" = "pendente" ] && [ -n "$C1" ] || rc=1
+check "05" "compra na vitrine → 'Meus ingressos' mostra pendente (código C1=$C1)" "$rc" \
+  "POST purchase → $code; status='$first'"
+st="$first"
+while [ $((SECONDS - p5_at)) -le 6 ] && [ "$st" != "confirmado" ]; do
+  sleep 0.5
+  web_get "$JAR_P" /me/tickets
+  st="$(testid "$BODY" ticket-status)"
+done
+rc=0; [ "$st" = "confirmado" ] || rc=1
+check "05" "ingresso C1 confirmado em $((SECONDS - p5_at))s (recarregando a página)" "$rc" "status='$st'"
 
 # --- Step 6: API purchase with the slow-decline card -------------------------------------------
 STEP6_AT=$SECONDS
@@ -189,7 +219,9 @@ api POST "/api/partner/events/$E1/purchases" "$(purchase_json t-sold@example.com
 elapsed=$((SECONDS - STEP6_AT))
 rc=0; [ "$STATUS" = "409" ] && [ "$BODY" = '{"error":"sold_out"}' ] && [ "$elapsed" -lt 30 ] || rc=1
 check "07" "nova compra antes de 30 s (${elapsed}s) → 409 sold_out" "$rc" "HTTP $STATUS $BODY"
-skip "07" "vitrine exibe 'Ingressos esgotados' (TODO: F04 — vitrine)"
+web_get "$JAR_P" "/events/$E1"
+rc=0; [ "$(testid "$BODY" sold-out)" = "Ingressos esgotados" ] || rc=1
+check "07" "vitrine exibe 'Ingressos esgotados' para o participante do passo 5" "$rc" "GET /events/$E1"
 
 # --- Step 8: after 45 s T2 is declined and the seat is back -------------------------------------
 if [ "$FAST" = "1" ]; then

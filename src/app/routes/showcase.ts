@@ -54,7 +54,18 @@ export default async function showcaseRoutes(app: FastifyInstance): Promise<void
 
   app.post<{ Params: IdParams; Body: PurchaseBody }>(
     '/events/:id/purchase',
-    { preHandler: requireParticipant },
+    {
+      preHandler: [
+        // Visitors go to the login and come back to the event page (not to this POST URL).
+        async (request, reply) => {
+          if (!request.user) {
+            const next = encodeURIComponent(`/events/${request.params.id}`);
+            return reply.redirect(`/login?next=${next}`, 302);
+          }
+        },
+        requireParticipant,
+      ],
+    },
     async (request, reply) => {
       const user = request.user!;
       const eventId = request.params.id;
