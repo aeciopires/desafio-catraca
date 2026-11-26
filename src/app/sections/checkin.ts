@@ -23,12 +23,10 @@ export const section: ManageSection | null = {
         const event = await findOwnedEvent(request.user!.id, request.params.id);
         if (!event) {
           // Same generic 404 page as the organizer routes: reveals nothing about the event.
-          return reply
-            .code(404)
-            .view('error.ejs', {
-              title: 'Evento não encontrado',
-              message: 'Evento não encontrado.',
-            });
+          return reply.code(404).view('error.ejs', {
+            title: 'Evento não encontrado',
+            message: 'Evento não encontrado.',
+          });
         }
         const rawCode = typeof request.body?.code === 'string' ? request.body.code : '';
         const checkinResult = await checkIn(event.id, rawCode);

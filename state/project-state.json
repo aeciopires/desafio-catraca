@@ -52,8 +52,8 @@
     "F06": {
       "name": "Check-in",
       "wave": 4,
-      "status": "todo",
-      "branch": "",
+      "status": "in_review",
+      "branch": "feat/F06-checkin",
       "pr": "",
       "latestReport": ""
     },
