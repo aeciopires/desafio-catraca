@@ -184,7 +184,8 @@ describe('F04 showcase', () => {
     });
     expect(anon.status).toBe(302);
     expect(anon.location).toMatch(/^\/login\?next=/);
-    expect(decodeURIComponent(anon.location!)).toContain(`/events/${eventId}`);
+    // After login the visitor lands back on the event page, not on the POST-only URL.
+    expect(anon.location).toBe(`/login?next=${encodeURIComponent(`/events/${eventId}`)}`);
     expect((await visitor.get('/me/tickets')).status).toBe(302);
 
     const { web } = await newParticipant('card');

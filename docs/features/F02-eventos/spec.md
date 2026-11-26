@@ -49,6 +49,7 @@ Mensagens de validação (exatas):
 - `O preço deve ser maior que zero`
 - `A lotação não pode ser menor que as vagas ocupadas (N)`
 - `Evento cancelado não pode ser editado`
+- `Evento cancelado não pode ser publicado` (publicação de evento cancelado → `422`, status inalterado)
 
 ### Rotas — `src/app/routes/organizer.ts` (todas com `requireOrganizer`)
 

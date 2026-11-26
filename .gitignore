@@ -434,3 +434,6 @@ test-results/
 reports/tests/
 .vitest/
 *.tsbuildinfo
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
