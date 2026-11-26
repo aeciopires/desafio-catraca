@@ -1,0 +1,12 @@
+# Grafana dashboards (F09): JSON files mounted at /var/lib/grafana/dashboards.
+apiVersion: 1
+
+providers:
+  - name: catraca
+    folder: Catraca
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

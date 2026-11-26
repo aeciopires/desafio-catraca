@@ -2,6 +2,7 @@
 // the exact order of R10; the ticket row is locked (FOR UPDATE) so concurrent check-ins of the
 // same code release the entrance only once.
 import { withTransaction } from '../db/pool.ts';
+import { checkins } from '../observability/metrics.ts';
 import type { EventRow, TicketRow } from './types.ts';
 
 export const CHECKIN_MESSAGES = {
@@ -74,5 +75,6 @@ export async function checkIn(eventId: string, rawCode: string): Promise<Checkin
     }
     return decision;
   });
+  checkins.inc({ result });
   return { result, message: CHECKIN_MESSAGES[result] };
 }

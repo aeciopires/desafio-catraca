@@ -6,6 +6,7 @@
 import { withTransaction } from '../db/pool.ts';
 import { DomainError } from '../lib/errors.ts';
 import { logger } from '../observability/logger.ts';
+import { eventsCancelled } from '../observability/metrics.ts';
 import { lockEvent } from './seats.ts';
 
 export const NOT_CANCELLABLE_MESSAGE = 'Só eventos publicados podem ser cancelados';
@@ -62,6 +63,7 @@ export async function cancelEvent(
       obsoleteJobs: obsolete.rowCount ?? 0,
     };
   });
+  eventsCancelled.inc();
   logger.info({ eventId, organizerId, ...result }, 'event cancelled');
   return { refunded: result.refunded, cancelled: result.cancelled };
 }

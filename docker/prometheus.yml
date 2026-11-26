@@ -1,0 +1,14 @@
+# Prometheus (F09): scrapes the app and the worker /metrics endpoints directly.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: catraca-app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['app:8080']
+  - job_name: catraca-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['worker:9464']
