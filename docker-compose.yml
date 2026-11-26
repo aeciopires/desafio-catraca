@@ -1,0 +1,98 @@
+# Catraca local stack. Every host port is configurable (see .env.example / docs/operations/configuracao.md).
+# Profiles:
+#   (none)         postgres, migrate (migrations + seed), app, worker
+#   observability  otel-collector, prometheus, grafana, jaeger, loki (enabled by `make up` when OBSERVABILITY=1)
+#   tools          lint/typecheck/test runner (used by `make gates` / `make test-*`)
+
+x-app-image: &app-image
+  image: catraca-app:${COMPOSE_PROJECT_NAME:-catraca}
+  build:
+    context: .
+    dockerfile: docker/app.Dockerfile
+    target: runtime
+
+x-app-env: &app-env
+  DATABASE_URL: postgres://catraca:catraca@postgres:5432/catraca
+  SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret-change-me-0123456789}
+  PARTNER_API_KEY: ${PARTNER_API_KEY:-catraca-partner-key-dev}
+  GATEWAY_MODE: ${GATEWAY_MODE:-simulated}
+  GATEWAY_DELAY_SCALE: ${GATEWAY_DELAY_SCALE:-1}
+  WORKER_POLL_MS: ${WORKER_POLL_MS:-200}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-true}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+
+services:
+  postgres:
+    image: postgres:18.7-alpine
+    environment:
+      POSTGRES_USER: catraca
+      POSTGRES_PASSWORD: catraca
+      POSTGRES_DB: catraca
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U catraca -d catraca']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *app-image
+    command: ['node', 'src/db/setup.ts']
+    environment:
+      <<: *app-env
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  app:
+    <<: *app-image
+    command: ['node', 'src/main.ts']
+    environment:
+      <<: *app-env
+      OTEL_SERVICE_NAME: catraca-app
+      PORT: 8080
+    ports:
+      - '${APP_PORT:-8080}:8080'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    <<: *app-image
+    command: ['node', 'src/worker/main.ts']
+    environment:
+      <<: *app-env
+      OTEL_SERVICE_NAME: catraca-worker
+      METRICS_PORT: 9464
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  tools:
+    image: catraca-tools:${COMPOSE_PROJECT_NAME:-catraca}
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+      target: dev
+    profiles: ['tools']
+    environment:
+      DATABASE_URL: postgres://catraca:catraca@postgres:5432/catraca
+      TEST_BASE_URL: http://app:8080
+      PARTNER_API_KEY: ${PARTNER_API_KEY:-catraca-partner-key-dev}
+      GATEWAY_DELAY_SCALE: ${GATEWAY_DELAY_SCALE:-1}
+      CI: 'true'
+
+volumes:
+  pgdata:

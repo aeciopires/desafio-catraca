@@ -79,7 +79,7 @@ Toda feature consome estes módulos; **não reimplementar**.
 | `src/app/auth.ts` | `request.user` (`{id,name,email,role} \| null`), preHandlers `requireParticipant`, `requireOrganizer` (visitante → 302 `/login?next=`; papel errado → 403 "Acesso restrito") |
 | `src/app/server.ts` | `buildApp()`; registra os plugins de rota já existentes como *stubs*: `routes/auth.ts` (F01), `routes/organizer.ts` (F02), `routes/showcase.ts` (F04), `routes/partner.ts` (F05), `routes/docs.ts` (F05) |
 | `src/app/views/` | `partials/header.ejs`, `partials/footer.ejs` (layout); `reply.locals.user` disponível em toda view |
-| `tests/integration/helpers.ts` | `BASE_URL`, `WebClient` (cookie jar, `get`, `postForm`), `loginAs(email, senha)`, `partner(method, path, body?, key?)`, `testId(html, id)`, `futureLocal(days)`, `SEED` (credenciais), `waitFor(fn, timeoutMs)` |
+| `tests/integration/helpers.ts` | `BASE_URL` (env `TEST_BASE_URL`), `WebClient` (cookie jar, `get`, `postForm`), `loginAs(email, senha)`, `partner(method, path, body?, key?)`, `testId(html, id)`, `futureLocal(days)`, `SEED` (credenciais), `waitFor(fn, timeoutMs)` |
 
 Convenção de HTML para testes: valores que o avaliador confere ficam em elementos com `data-testid` (ex.: `data-testid="flash"`, `data-testid="dash-confirmed"`).
 

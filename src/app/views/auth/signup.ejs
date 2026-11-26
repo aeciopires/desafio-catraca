@@ -1,0 +1,14 @@
+<%- include('../partials/header', { title: 'Criar conta' }) %>
+<h1>Criar conta de participante</h1>
+<% if (error) { %><p class="error" data-testid="form-error"><%= error %></p><% } %>
+<form method="post" action="/signup" class="card" data-testid="signup-form">
+  <input type="hidden" name="next" value="<%= next %>">
+  <label for="name">Nome</label>
+  <input id="name" name="name" required value="<%= form.name || '' %>">
+  <label for="email">E-mail</label>
+  <input id="email" name="email" type="email" required value="<%= form.email || '' %>">
+  <label for="password">Senha (mínimo 6 caracteres)</label>
+  <input id="password" name="password" type="password" minlength="6" required>
+  <p><button class="btn" type="submit">Criar conta</button></p>
+</form>
+<%- include('../partials/footer') %>
